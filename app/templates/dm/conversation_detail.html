@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation with {{ conversation.instagram_username or conversation.instagram_user_id }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+  <a href="{{ url_for('settings.conversations') }}" class="btn secondary" style="margin-bottom: 15px;">← Back to Conversations</a>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 style="margin-bottom: 5px;">💬 Conversation with {{ conversation.instagram_username or 'User ' + conversation.instagram_user_id }}</h1>
+      <p style="color: #666; margin: 0;">{{ conversation.message_count }} messages • {{ conversation.auto_reply_count }} auto-replies</p>
+    </div>
+    
+    <form method="POST" action="{{ url_for('settings.update_conversation_status', conversation_id=conversation.id) }}" style="display: flex; gap: 10px; align-items: center;">
+      <select name="status" style="padding: 8px 12px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+        <option value="active" {% if conversation.conversation_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="resolved" {% if conversation.conversation_status == 'resolved' %}selected{% endif %}>Resolved</option>
+        <option value="archived" {% if conversation.conversation_status == 'archived' %}selected{% endif %}>Archived</option>
+      </select>
+      <button type="submit" class="btn" style="background: #0a66c2; color: #fff;">Update Status</button>
+    </form>
+  </div>
+</div>
+
+<!-- Conversation Details Card -->
+<div class="card" style="margin-bottom: 20px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+    <div>
+      <strong style="color: #666;">Status:</strong>
+      <span class="badge" style="background: {% if conversation.conversation_status == 'active' %}#28a745{% elif conversation.conversation_status == 'resolved' %}#0a66c2{% else %}#6c757d{% endif %}; color: white; margin-left: 10px;">
+        {{ conversation.conversation_status }}
+      </span>
+    </div>
+    <div>
+      <strong style="color: #666;">Created:</strong> {{ conversation.created_at.strftime('%Y-%m-%d %H:%M') }}
+    </div>
+    <div>
+      <strong style="color: #666;">Last Message:</strong> {{ conversation.last_message_at.strftime('%Y-%m-%d %H:%M') }}
+    </div>
+    <div>
+      <strong style="color: #666;">Platform:</strong> {{ conversation.platform }}
+    </div>
+  </div>
+</div>
+
+<!-- Messages -->
+<div style="background: #f5f5f5; border-radius: 12px; padding: 20px; max-width: 900px; margin: 0 auto;">
+  {% for message in messages %}
+  <div style="display: flex; {% if message.sender_type == 'user' %}justify-content: flex-start;{% else %}justify-content: flex-end;{% endif %} margin-bottom: 15px;">
+    <div style="max-width: 70%; background: {% if message.sender_type == 'user' %}#fff{% else %}#0a66c2{% endif %}; 
+                color: {% if message.sender_type == 'user' %}#1a1a1a{% else %}#fff{% endif %}; 
+                padding: 12px 16px; border-radius: 16px; 
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      
+      <div style="font-size: 15px; line-height: 1.5; word-wrap: break-word;">
+        {{ message.message_text }}
+      </div>
+      
+      <div style="margin-top: 8px; font-size: 11px; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <span>{{ message.created_at.strftime('%H:%M') }}</span>
+        {% if message.is_auto_reply %}
+        <span class="badge" style="background: rgba(255,255,255,0.3); color: inherit; font-size: 10px;">🤖 Auto-reply</span>
+        {% endif %}
+        {% if not message.sent_successfully and message.sender_type == 'bot' %}
+        <span class="badge" style="background: #dc3545; color: white; font-size: 10px;">❌ Failed</span>
+        {% endif %}
+      </div>
+      
+      {% if message.is_auto_reply and message.gemini_response_time %}
+      <div style="margin-top: 5px; font-size: 10px; opacity: 0.6;">
+        ⚡ Generated in {{ "%.2f"|format(message.gemini_response_time) }}s
+      </div>
+      {% endif %}
+      
+      {% if message.error_message %}
+      <div style="margin-top: 8px; padding: 8px; background: rgba(220,53,69,0.2); border-radius: 6px; font-size: 12px;">
+        ⚠️ Error: {{ message.error_message }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  
+  {% if not messages %}
+  <div style="text-align: center; padding: 40px; color: #999;">
+    No messages yet
+  </div>
+  {% endif %}
+</div>
+
+<!-- Debug Info (for admins) -->
+{% if session.get('role') == 'admin' and messages %}
+<div class="card" style="margin-top: 30px; background: #f8f9fa;">
+  <h3 style="margin-bottom: 15px;">🔧 Debug Information</h3>
+  <details>
+    <summary style="cursor: pointer; font-weight: 500; margin-bottom: 10px;">View Last AI Prompt</summary>
+    {% for message in messages|reverse %}
+      {% if message.gemini_prompt_used %}
+      <pre style="background: #fff; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.4;">{{ message.gemini_prompt_used }}</pre>
+      {% break %}
+      {% endif %}
+    {% endfor %}
+  </details>
+</div>
+{% endif %}
+{% endblock %}

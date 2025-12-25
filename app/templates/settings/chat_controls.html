@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat Control Settings{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+  <h1 style="margin-bottom: 10px;">⚙️ Chat Control Settings</h1>
+  <p style="color: #666;">Configure auto-reply automation, rate limits, and restrictions</p>
+</div>
+
+<!-- Statistics Dashboard -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+  <div class="card" style="text-align: center;">
+    <div style="font-size: 32px; font-weight: bold; color: #0a66c2;">{{ stats.total_conversations }}</div>
+    <div style="color: #666; margin-top: 5px;">Total Conversations</div>
+  </div>
+  <div class="card" style="text-align: center;">
+    <div style="font-size: 32px; font-weight: bold; color: #28a745;">{{ stats.active_conversations }}</div>
+    <div style="color: #666; margin-top: 5px;">Active</div>
+  </div>
+  <div class="card" style="text-align: center;">
+    <div style="font-size: 32px; font-weight: bold; color: #f59e0b;">{{ stats.auto_replies_24h }}</div>
+    <div style="color: #666; margin-top: 5px;">Replies (24h)</div>
+  </div>
+  <div class="card" style="text-align: center;">
+    <div style="font-size: 32px; font-weight: bold; color: {% if stats.remaining_1h > 0 %}#28a745{% else %}#dc3545{% endif %};">
+      {{ stats.auto_replies_1h }}/{{ stats.rate_limit_1h }}
+    </div>
+    <div style="color: #666; margin-top: 5px;">Usage (1h)</div>
+  </div>
+</div>
+
+<!-- Quick Toggles -->
+<div class="card" style="margin-bottom: 25px;">
+  <h2 style="margin-bottom: 20px;">🎛️ Quick Controls</h2>
+  
+  <div style="display: grid; gap: 15px;">
+    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_reply') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.auto_reply_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
+      <div>
+        <h3 style="margin: 0 0 5px 0;">🤖 Auto-Reply to DMs</h3>
+        <p style="margin: 0; color: #666; font-size: 14px;">Automatically respond to Instagram direct messages using AI</p>
+      </div>
+      <button type="submit" class="btn" style="background: {% if settings.auto_reply_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
+        {% if settings.auto_reply_enabled %}✓ ON{% else %}✗ OFF{% endif %}
+      </button>
+    </form>
+
+    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_comment') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.auto_comment_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
+      <div>
+        <h3 style="margin: 0 0 5px 0;">💬 Auto-Comment on Posts</h3>
+        <p style="margin: 0; color: #666; font-size: 14px;">Automatically respond to comments on posts (Coming Soon)</p>
+      </div>
+      <button type="submit" class="btn" style="background: {% if settings.auto_comment_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
+        {% if settings.auto_comment_enabled %}✓ ON{% else %}✗ OFF{% endif %}
+      </button>
+    </form>
+
+    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='business_hours') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.business_hours_only %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
+      <div>
+        <h3 style="margin: 0 0 5px 0;">🕐 Business Hours Only</h3>
+        <p style="margin: 0; color: #666; font-size: 14px;">Restrict auto-replies to business hours ({{ settings.business_hours_start }} - {{ settings.business_hours_end }})</p>
+      </div>
+      <button type="submit" class="btn" style="background: {% if settings.business_hours_only %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
+        {% if settings.business_hours_only %}✓ ON{% else %}✗ OFF{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Detailed Settings Form -->
+<div class="card">
+  <h2 style="margin-bottom: 20px;">📋 Detailed Settings</h2>
+  
+  <form method="POST" action="{{ url_for('settings.update_settings') }}">
+    
+    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="margin-bottom: 15px;">⏱️ Rate Limits</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">DM Reply Rate Limit (per hour)</label>
+          <input type="number" name="reply_rate_limit" value="{{ settings.reply_rate_limit }}" min="1" max="100"
+                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+          <small style="color: #666;">Maximum auto-replies per hour</small>
+        </div>
+        
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Comment Rate Limit (per hour)</label>
+          <input type="number" name="comment_rate_limit" value="{{ settings.comment_rate_limit }}" min="1" max="100"
+                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+          <small style="color: #666;">Maximum auto-comments per hour</small>
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="margin-bottom: 15px;">🕐 Business Hours</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Start Time</label>
+          <input type="time" name="business_hours_start" value="{{ settings.business_hours_start }}"
+                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+        </div>
+        
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">End Time</label>
+          <input type="time" name="business_hours_end" value="{{ settings.business_hours_end }}"
+                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+        </div>
+      </div>
+    </div>
+
+    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="margin-bottom: 15px;">💬 Default Messages</h3>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Default Greeting</label>
+        <textarea name="default_greeting" rows="3"
+                  style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; font-family: inherit;">{{ settings.default_greeting }}</textarea>
+        <small style="color: #666;">Initial message for new conversations</small>
+      </div>
+      
+      <div>
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Fallback Message</label>
+        <textarea name="fallback_message" rows="3"
+                  style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; font-family: inherit;">{{ settings.fallback_message }}</textarea>
+        <small style="color: #666;">Message when AI fails to generate a response</small>
+      </div>
+    </div>
+
+    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+      <h3 style="margin-bottom: 15px;">🚫 Blacklist Keywords</h3>
+      
+      <input type="text" name="blacklist_keywords" value="{{ blacklist|join(', ') }}"
+             placeholder="E.g., spam, advertisement, promo"
+             style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+      <small style="color: #666;">Comma-separated keywords. Messages containing these will not get auto-replies</small>
+    </div>
+
+    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+      <h3 style="margin-bottom: 15px;">⭐ Whitelist Users</h3>
+      
+      <input type="text" name="whitelist_users" value="{{ whitelist|join(', ') }}"
+             placeholder="E.g., @vipuser, @partner"
+             style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; margin-bottom: 8px;">
+      <small style="color: #666;">Comma-separated usernames for priority handling (future feature)</small>
+    </div>
+
+    <button type="submit" class="btn" style="background: #0a66c2; color: #fff; width: 100%;">
+      💾 Save All Settings
+    </button>
+  </form>
+</div>
+
+<div style="margin-top: 20px; text-align: center;">
+  <a href="{{ url_for('settings.conversations') }}" class="btn secondary">
+    💬 View DM Conversations
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh stats every 30 seconds
+setInterval(() => {
+  fetch('{{ url_for("settings.api_status") }}')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Status updated:', data);
+      // Could update UI here
+    })
+    .catch(error => console.error('Error fetching status:', error));
+}, 30000);
+</script>
+{% endblock %}

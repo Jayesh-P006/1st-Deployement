@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+
+{% block head %}
+<style>
+  .profile-container {
+    padding: 30px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .profile-header {
+    margin-bottom: 30px;
+  }
+  
+  .profile-header h1 {
+    margin: 0;
+    color: #333;
+  }
+  
+  .profile-header p {
+    margin: 5px 0 0 0;
+    color: #666;
+  }
+  
+  .profile-card {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  
+  .avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .avatar {
+    width: 80px;
+    height: 80px;
+    background: #0a66c2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+  }
+  
+  .avatar-info h2 {
+    margin: 0 0 5px 0;
+    color: #333;
+  }
+  
+  .avatar-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .profile-details {
+    display: grid;
+    gap: 20px;
+  }
+  
+  .detail-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+  }
+  
+  .detail-value {
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    color: #333;
+  }
+  
+  .badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  
+  .badge-vertical {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+  
+  .badge-lead {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .badge-colead {
+    background: #fff3e0;
+    color: #e65100;
+  }
+  
+  .badge-member {
+    background: #f3e5f5;
+    color: #6a1b9a;
+  }
+  
+  .badge-active {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .badge-inactive {
+    background: #ffebee;
+    color: #c62828;
+  }
+  
+  .permissions-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  .permissions-section h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+  }
+  
+  .permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+  }
+  
+  .permission-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .permission-icon {
+    font-size: 18px;
+  }
+  
+  .permission-icon.granted {
+    color: #4caf50;
+  }
+  
+  .permission-icon.denied {
+    color: #999;
+  }
+  
+  .permission-label {
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .back-button-container {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .back-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background: white;
+    color: #333;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>My Profile</h1>
+        <p>View your account information</p>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+        <!-- Avatar Section -->
+        <div class="avatar-section">
+            <div class="avatar">
+                {{ user.full_name[0]|upper if user.full_name else user.username[0]|upper }}
+            </div>
+            <div class="avatar-info">
+                <h2>{{ user.full_name or user.username }}</h2>
+                <p>@{{ user.username }}</p>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="profile-details">
+            <div class="detail-field">
+                <label>Full Name</label>
+                <div class="detail-value">
+                    {{ user.full_name or 'Not set' }}
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Username</label>
+                <div class="detail-value">
+                    {{ user.username }}
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Email</label>
+                <div class="detail-value">
+                    {{ user.email }}
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Vertical</label>
+                <div class="detail-value">
+                    <span class="badge badge-vertical">
+                        {{ user.vertical or 'Not set' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Position</label>
+                <div class="detail-value">
+                    <span class="badge {% if user.position == 'Lead' %}badge-lead{% elif user.position == 'Co-Lead' %}badge-colead{% else %}badge-member{% endif %}">
+                        {{ user.position or 'Not set' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Account Status</label>
+                <div class="detail-value">
+                    <span class="badge {% if user.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                        {% if user.is_active %}ACTIVE{% else %}INACTIVE{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="detail-field">
+                <label>Member Since</label>
+                <div class="detail-value">
+                    {{ user.created_at.strftime('%B %d, %Y') }}
+                </div>
+            </div>
+
+            {% if user.last_login %}
+            <div class="detail-field">
+                <label>Last Login</label>
+                <div class="detail-value">
+                    {{ user.last_login.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Permissions Section -->
+        <div class="permissions-section">
+            <h3>Permissions</h3>
+            <div class="permissions-grid">
+                <div class="permission-item">
+                    <span class="permission-icon {% if user.can_edit_content() %}granted{% else %}denied{% endif %}">
+                        {% if user.can_edit_content() %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span class="permission-label">Edit Content</span>
+                </div>
+                <div class="permission-item">
+                    <span class="permission-icon {% if user.can_edit_media() %}granted{% else %}denied{% endif %}">
+                        {% if user.can_edit_media() %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span class="permission-label">Edit Media</span>
+                </div>
+                <div class="permission-item">
+                    <span class="permission-icon {% if user.can_edit_tags() %}granted{% else %}denied{% endif %}">
+                        {% if user.can_edit_tags() %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span class="permission-label">Edit Tags</span>
+                </div>
+                <div class="permission-item">
+                    <span class="permission-icon {% if user.can_approve() %}granted{% else %}denied{% endif %}">
+                        {% if user.can_approve() %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span class="permission-label">Approve Drafts</span>
+                </div>
+                <div class="permission-item">
+                    <span class="permission-icon {% if user.can_schedule() %}granted{% else %}denied{% endif %}">
+                        {% if user.can_schedule() %}✓{% else %}✗{% endif %}
+                    </span>
+                    <span class="permission-label">Schedule Posts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-button-container">
+        <a href="{{ url_for('collab.drafts') }}" class="back-button">
+            ← Back to Drafts
+        </a>
+    </div>
+</div>
+{% endblock %}

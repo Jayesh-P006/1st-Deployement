@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Webhook Configuration{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+  <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="margin-bottom: 15px;">← Back to Admin</a>
+  <h1 style="margin-bottom: 10px;">🔗 Instagram Webhook Configuration</h1>
+  <p style="color: #666;">Configure webhooks to receive Instagram DM notifications</p>
+</div>
+
+<!-- Status Card -->
+<div class="card" style="margin-bottom: 25px; {% if webhook_status.configured %}background: #d4edda; border-left: 4px solid #28a745;{% else %}background: #f8d7da; border-left: 4px solid #dc3545;{% endif %}">
+  <h2 style="margin-bottom: 15px;">
+    {% if webhook_status.configured %}✅ Webhook Configured{% else %}⚠️ Webhook Not Configured{% endif %}
+  </h2>
+  
+  <div style="display: grid; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 500;">Access Token:</span>
+      <span class="badge" style="background: {% if webhook_status.access_token %}#28a745{% else %}#dc3545{% endif %}; color: white;">
+        {% if webhook_status.access_token %}✓ Configured{% else %}✗ Missing{% endif %}
+      </span>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 500;">Business Account ID:</span>
+      <span class="badge" style="background: {% if webhook_status.business_id %}#28a745{% else %}#dc3545{% endif %}; color: white;">
+        {% if webhook_status.business_id %}✓ Configured{% else %}✗ Missing{% endif %}
+      </span>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 500;">App Secret:</span>
+      <span class="badge" style="background: {% if webhook_status.app_secret %}#28a745{% else %}#f59e0b{% endif %}; color: white;">
+        {% if webhook_status.app_secret %}✓ Configured{% else %}⚠️ Optional{% endif %}
+      </span>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 500;">Verify Token:</span>
+      <span class="badge" style="background: {% if webhook_status.verify_token %}#28a745{% else %}#dc3545{% endif %}; color: white;">
+        {% if webhook_status.verify_token %}✓ Configured{% else %}✗ Missing{% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Webhook URL Card -->
+<div class="card" style="margin-bottom: 25px;">
+  <h2 style="margin-bottom: 15px;">📍 Webhook URL</h2>
+  
+  <div style="margin-bottom: 15px;">
+    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Callback URL:</label>
+    <div style="display: flex; gap: 10px;">
+      <input type="text" value="{{ webhook_url }}" readonly
+             style="flex: 1; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; background: #f8f9fa; font-family: monospace;">
+      <button onclick="copyToClipboard('{{ webhook_url }}')" class="btn secondary">📋 Copy</button>
+    </div>
+    <small style="color: #666; margin-top: 5px; display: block;">Use this URL when setting up webhooks in Facebook App Dashboard</small>
+  </div>
+  
+  <div>
+    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Verify Token:</label>
+    <div style="display: flex; gap: 10px;">
+      <input type="text" value="{{ verify_token }}" readonly
+             style="flex: 1; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; background: #f8f9fa; font-family: monospace;">
+      <button onclick="copyToClipboard('{{ verify_token }}')" class="btn secondary">📋 Copy</button>
+    </div>
+    <small style="color: #666; margin-top: 5px; display: block;">Use this token to verify your webhook subscription</small>
+  </div>
+</div>
+
+<!-- Setup Instructions -->
+<div class="card">
+  <h2 style="margin-bottom: 15px;">📖 Setup Instructions</h2>
+  
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Step 1: Expose Your Local Server</h3>
+    <p style="margin-bottom: 10px;">For development, use ngrok to expose your local server to the internet:</p>
+    <pre style="background: #fff; padding: 15px; border-radius: 6px; overflow-x: auto;">ngrok http 5000</pre>
+    <p style="margin-top: 10px; color: #666;">Copy the HTTPS URL (e.g., https://abc123.ngrok.io) and update PUBLIC_URL in your .env file</p>
+  </div>
+  
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Step 2: Configure Facebook App</h3>
+    <ol style="padding-left: 20px; line-height: 1.8;">
+      <li>Go to <a href="https://developers.facebook.com/apps" target="_blank" style="color: #0a66c2;">Facebook Developers</a></li>
+      <li>Select your app or create a new one</li>
+      <li>Go to <strong>Products</strong> → <strong>Webhooks</strong></li>
+      <li>Click <strong>Create Subscription</strong> for Instagram</li>
+      <li>Enter your Callback URL: <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">{{ webhook_url }}</code></li>
+      <li>Enter your Verify Token: <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">{{ verify_token }}</code></li>
+      <li>Subscribe to <strong>messages</strong> field</li>
+      <li>Click <strong>Verify and Save</strong></li>
+    </ol>
+  </div>
+  
+  <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h3 style="margin-bottom: 15px;">Step 3: Configure Permissions</h3>
+    <p style="margin-bottom: 10px;">Ensure your Instagram account has the following permissions:</p>
+    <ul style="padding-left: 20px; line-height: 1.8;">
+      <li><code>instagram_basic</code> - Basic Instagram profile information</li>
+      <li><code>instagram_manage_messages</code> - Send and receive Instagram messages</li>
+      <li><code>pages_messaging</code> - Access messaging functionality</li>
+    </ul>
+    <p style="margin-top: 10px; color: #f59e0b;">⚠️ Note: Some permissions may require app review from Facebook</p>
+  </div>
+  
+  <div style="background: #d4edda; padding: 20px; border-radius: 8px;">
+    <h3 style="margin-bottom: 15px; color: #155724;">✅ Verification</h3>
+    <p style="margin-bottom: 10px;">To test if webhooks are working:</p>
+    <ol style="padding-left: 20px; line-height: 1.8;">
+      <li>Send a DM to your connected Instagram account</li>
+      <li>Check the <a href="{{ url_for('settings.conversations') }}" style="color: #0a66c2;">DM Conversations</a> page</li>
+      <li>Verify that the message appears and an auto-reply was sent</li>
+    </ol>
+  </div>
+</div>
+
+<div style="margin-top: 25px; display: flex; gap: 10px;">
+  <a href="{{ url_for('settings.index') }}" class="btn" style="background: #0a66c2; color: #fff;">
+    ⚙️ Go to Chat Settings
+  </a>
+  <a href="{{ url_for('training.index') }}" class="btn secondary">
+    🎓 Manage Training Data
+  </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Copied to clipboard!');
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+</script>
+{% endblock %}
