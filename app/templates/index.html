@@ -248,7 +248,7 @@
             <span class="media-none">Text only</span>
           {% endif %}
         </td>
-        <td class="time-cell">{{ p.scheduled_time.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="time-cell">{{ p.scheduled_time|to_local }}</td>
         <td>
           <span class="status-badge {{ p.status }}">{{ p.status|upper }}</span>
           {% if p.status == 'failed' and p.error_message %}

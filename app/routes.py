@@ -1,9 +1,45 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import os
 from . import db
 from .models import ScheduledPost, TokenUsage
 from .auth import login_required
+
+def convert_local_to_utc(local_dt, tz_name='Asia/Kolkata'):
+    """Convert local datetime to UTC.
+    
+    For IST (Asia/Kolkata): UTC+5:30
+    """
+    # Define timezone offsets
+    tz_offsets = {
+        'Asia/Kolkata': timedelta(hours=5, minutes=30),  # IST
+        'America/New_York': timedelta(hours=-5),  # EST
+        'America/Los_Angeles': timedelta(hours=-8),  # PST
+        'Europe/London': timedelta(hours=0),  # GMT
+        'UTC': timedelta(hours=0),
+    }
+    
+    offset = tz_offsets.get(tz_name, timedelta(hours=5, minutes=30))  # Default IST
+    
+    # If datetime is naive (no timezone), assume it's in local timezone
+    if local_dt.tzinfo is None:
+        # Subtract offset to get UTC
+        utc_dt = local_dt - offset
+        return utc_dt
+    return local_dt
+
+def convert_utc_to_local(utc_dt, tz_name='Asia/Kolkata'):
+    """Convert UTC datetime to local time."""
+    tz_offsets = {
+        'Asia/Kolkata': timedelta(hours=5, minutes=30),
+        'America/New_York': timedelta(hours=-5),
+        'America/Los_Angeles': timedelta(hours=-8),
+        'Europe/London': timedelta(hours=0),
+        'UTC': timedelta(hours=0),
+    }
+    
+    offset = tz_offsets.get(tz_name, timedelta(hours=5, minutes=30))
+    return utc_dt + offset
 
 main_bp = Blueprint('main', __name__)
 
@@ -53,9 +89,10 @@ def new_post():
             return redirect(url_for('main.new_post'))
 
         try:
-            # Assume input is local time; convert to UTC by treating as naive and subtracting offset if needed.
-            # Simplified: treat input as UTC directly for now.
-            scheduled_time = datetime.fromisoformat(scheduled_time_str)
+            # Parse local time from form and convert to UTC for storage
+            local_time = datetime.fromisoformat(scheduled_time_str)
+            tz_name = current_app.config.get('APP_TIMEZONE', 'Asia/Kolkata')
+            scheduled_time = convert_local_to_utc(local_time, tz_name)
         except ValueError:
             flash('Invalid datetime format. Use YYYY-MM-DDTHH:MM.', 'error')
             return redirect(url_for('main.new_post'))
@@ -116,7 +153,10 @@ def edit_post(post_id):
             return redirect(url_for('main.edit_post', post_id=post_id))
 
         try:
-            scheduled_time = datetime.fromisoformat(scheduled_time_str)
+            # Parse local time from form and convert to UTC for storage
+            local_time = datetime.fromisoformat(scheduled_time_str)
+            tz_name = current_app.config.get('APP_TIMEZONE', 'Asia/Kolkata')
+            scheduled_time = convert_local_to_utc(local_time, tz_name)
         except ValueError:
             flash('Invalid datetime format. Use YYYY-MM-DDTHH:MM.', 'error')
             return redirect(url_for('main.edit_post', post_id=post_id))
@@ -159,7 +199,11 @@ def edit_post(post_id):
     insta_usage = TokenUsage.query.filter_by(platform='instagram').first()
     linkedin_usage = TokenUsage.query.filter_by(platform='linkedin').first()
     
-    return render_template('edit_post.html', post=post, insta_usage=insta_usage, linkedin_usage=linkedin_usage)
+    # Convert stored UTC time to local time for the edit form
+    tz_name = current_app.config.get('APP_TIMEZONE', 'Asia/Kolkata')
+    local_scheduled_time = convert_utc_to_local(post.scheduled_time, tz_name)
+    
+    return render_template('edit_post.html', post=post, insta_usage=insta_usage, linkedin_usage=linkedin_usage, local_scheduled_time=local_scheduled_time)
 
 @main_bp.route('/delete/<int:post_id>', methods=['POST'])
 @login_required
