@@ -75,7 +75,7 @@ class Config:
     
     # Gemini AI Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-pro')
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
     
     # Timezone Configuration (for converting user input to UTC)
     # Set to your local timezone, e.g., 'Asia/Kolkata' for IST
