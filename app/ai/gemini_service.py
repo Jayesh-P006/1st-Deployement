@@ -13,7 +13,7 @@ def initialize_gemini():
     if not api_key:
         raise ValueError('GEMINI_API_KEY not configured. Please set it in config.py or .env file')
     genai.configure(api_key=api_key)
-    model_name = current_app.config.get('GEMINI_MODEL', 'gemini-pro')
+    model_name = current_app.config.get('GEMINI_MODEL', 'gemini-1.5-flash')
     return genai.GenerativeModel(model_name)
 
 def get_training_context():
