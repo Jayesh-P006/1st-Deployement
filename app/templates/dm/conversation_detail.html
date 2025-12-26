@@ -94,10 +94,11 @@
   <h3 style="margin-bottom: 15px;">🔧 Debug Information</h3>
   <details>
     <summary style="cursor: pointer; font-weight: 500; margin-bottom: 10px;">View Last AI Prompt</summary>
+    {% set found_prompt = namespace(value=False) %}
     {% for message in messages|reverse %}
-      {% if message.gemini_prompt_used %}
+      {% if message.gemini_prompt_used and not found_prompt.value %}
       <pre style="background: #fff; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.4;">{{ message.gemini_prompt_used }}</pre>
-      {% break %}
+      {% set found_prompt.value = True %}
       {% endif %}
     {% endfor %}
   </details>
