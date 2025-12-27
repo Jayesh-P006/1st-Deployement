@@ -5,39 +5,65 @@
 {% block content %}
   <div class="card">
     <h1 style="margin-top: 0;">Privacy Policy</h1>
-    <p>This Privacy Policy describes how this application ("we", "us") collects, uses, and protects information when you use the service.</p>
+    <p>This Privacy Policy explains how this application processes data when you use our service, including when we receive Instagram messaging webhook events.</p>
 
-    <h3>What data we process</h3>
+    <h3>Data we collect and process</h3>
     <ul>
-      <li><strong>Account data</strong>: username/email you use to access this app.</li>
-      <li><strong>Instagram DM webhook events</strong>: message metadata and content that Instagram sends to our webhook endpoint so we can display and (optionally) auto-reply.</li>
-      <li><strong>Operational logs</strong>: basic logs to keep the service reliable (errors, request timestamps).</li>
+      <li><strong>App account data</strong>: usernames/emails used to log into this app (for team access and administration).</li>
+      <li><strong>Instagram messaging webhook data</strong>: when configured, Instagram/Meta may send webhook events to our endpoint containing message data such as sender/recipient IDs, message IDs, timestamps, and message text.</li>
+      <li><strong>Conversation records stored by the app</strong>: the app stores DM conversations and messages in its database so they can be displayed in the Conversations view and used for automation features.</li>
+      <li><strong>Automation metadata</strong>: settings (for example, whether auto-reply is enabled), and delivery status/error details for outgoing replies.</li>
+      <li><strong>Operational data</strong>: logs and diagnostics (for example, errors and request timing) to keep the service reliable and secure.</li>
     </ul>
 
-    <h3>How we use data</h3>
+    <h3>How we use the data</h3>
     <ul>
-      <li>To receive and process Instagram webhook events.</li>
-      <li>To display DM conversations in the app and enable features like conversation management/auto-replies.</li>
-      <li>To maintain security, prevent abuse, and debug issues.</li>
+      <li><strong>Receive and process webhooks</strong> to record incoming Instagram DMs and update conversation history.</li>
+      <li><strong>Display conversations</strong> inside the app for your team to view and manage.</li>
+      <li><strong>Send replies</strong> through the Instagram Graph API when auto-reply is enabled.</li>
+      <li><strong>Generate suggested/automatic replies</strong> using AI only when automation features are enabled/configured in the app.</li>
+      <li><strong>Maintain security and performance</strong> (rate limiting, abuse prevention, debugging).</li>
     </ul>
+
+    <h3>AI processing (if enabled)</h3>
+    <p>If AI reply features are enabled, message text may be processed to generate a reply. We use this processing only to provide messaging automation features and not for unrelated advertising.</p>
 
     <h3>Data sharing</h3>
-    <p>We do not sell your personal data. We share data only as required to operate the service (for example, hosting/database providers) or to comply with legal obligations.</p>
+    <p>We do not sell personal data. Data may be shared with service providers needed to operate the app (for example, hosting and database providers) and with Meta/Instagram APIs when sending messages or making API calls.</p>
 
-    <h3>Data retention</h3>
-    <p>We retain data only as long as needed for the features you use and operational/security purposes. You can request deletion at any time (see the Data Deletion page).</p>
+    <h3>Retention</h3>
+    <p>
+      DM conversations/messages are retained
+      {% if retention_days and retention_days|string %}
+        for up to <strong>{{ retention_days }}</strong> days (unless a longer period is needed for security, legal, or operational reasons)
+      {% else %}
+        until you request deletion or an administrator deletes them
+      {% endif %}.
+      You can request deletion at any time (see the Data Deletion page).
+    </p>
+
+    <h3>Your choices</h3>
+    <ul>
+      <li>You can disable auto-reply in the app settings at any time.</li>
+      <li>You can request deletion of stored DM data and related records.</li>
+    </ul>
 
     <h3>Security</h3>
     <p>We use reasonable safeguards to protect data, but no method of transmission or storage is 100% secure.</p>
 
     <h3>Contact</h3>
     <p>
-      If you have questions or requests about this policy, contact us at:
+      For privacy questions or deletion requests, contact:
       {% if support_email %}
         <a href="mailto:{{ support_email }}">{{ support_email }}</a>
       {% else %}
         the contact email provided in the app listing.
       {% endif %}
+      {% if deletion_days %}
+        (we aim to process verified deletion requests within {{ deletion_days }} days).
+      {% endif %}
     </p>
+
+    <p style="margin-top: 16px; color: #6c757d;">Last updated: Dec 27, 2025</p>
   </div>
 {% endblock %}

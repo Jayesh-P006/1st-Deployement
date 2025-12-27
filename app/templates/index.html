@@ -123,7 +123,18 @@
   
   <!-- Account Status Section -->
   <div class="account-status-section">
-    <h3>📡 Account Connection Status</h3>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <h3 style="margin: 0;">📡 Account Connection Status</h3>
+      <button
+        type="button"
+        id="refreshAccountStatus"
+        class="btn secondary"
+        style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 0.45rem 0.75rem;"
+        title="Refresh account status"
+      >
+        ↻ Refresh
+      </button>
+    </div>
     <div class="account-status-grid">
       
       <!-- Instagram Status -->
@@ -134,8 +145,7 @@
         </div>
         <div class="status-content">
           <div class="status-loading">
-            <div class="spinner instagram"></div>
-            <p>Checking connection...</p>
+            <p>Not checked yet. Click “Refresh”.</p>
           </div>
         </div>
       </div>
@@ -148,8 +158,7 @@
         </div>
         <div class="status-content">
           <div class="status-loading">
-            <div class="spinner linkedin"></div>
-            <p>Checking connection...</p>
+            <p>Not checked yet. Click “Refresh”.</p>
           </div>
         </div>
       </div>
@@ -355,6 +364,32 @@ window.onclick = function(event) {
 
 // Fetch and display account status
 function checkAccountStatus() {
+  const refreshBtn = document.getElementById('refreshAccountStatus');
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '↻ Refreshing…';
+  }
+
+  // Show loading state while fetching
+  const instagramContent = document.querySelector('#instagramStatus .status-content');
+  const linkedinContent = document.querySelector('#linkedinStatus .status-content');
+  if (instagramContent) {
+    instagramContent.innerHTML = `
+      <div class="status-loading">
+        <div class="spinner instagram"></div>
+        <p>Checking connection...</p>
+      </div>
+    `;
+  }
+  if (linkedinContent) {
+    linkedinContent.innerHTML = `
+      <div class="status-loading">
+        <div class="spinner linkedin"></div>
+        <p>Checking connection...</p>
+      </div>
+    `;
+  }
+
   fetch('/api/account-status')
     .then(response => response.json())
     .then(data => {
@@ -367,6 +402,12 @@ function checkAccountStatus() {
       console.error('Error fetching account status:', error);
       updateAccountStatus('instagram', {status: 'error', message: 'Failed to check status'});
       updateAccountStatus('linkedin', {status: 'error', message: 'Failed to check status'});
+    })
+    .finally(() => {
+      if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '↻ Refresh';
+      }
     });
 }
 
@@ -446,11 +487,12 @@ function updateAccountStatus(platform, statusData) {
   }
 }
 
-// Check status on page load
+// Fetch status only when user asks (reduces Meta API calls)
 document.addEventListener('DOMContentLoaded', function() {
-  checkAccountStatus();
-  // Refresh status every 30 seconds
-  setInterval(checkAccountStatus, 30000);
+  const refreshBtn = document.getElementById('refreshAccountStatus');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', checkAccountStatus);
+  }
 });
 </script>
 {% endblock %}

@@ -5,6 +5,13 @@ from . import db
 from .models import ScheduledPost, TokenUsage
 from .auth import login_required
 
+# In-process cache for account status to avoid repeated Meta API calls.
+# This resets on deploy/restart (which is fine for status checks).
+_ACCOUNT_STATUS_CACHE = {
+    'value': None,
+    'expires_at': None,
+}
+
 def convert_local_to_utc(local_dt, tz_name='Asia/Kolkata'):
     """Convert local datetime to UTC.
     
@@ -47,7 +54,14 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/privacy-policy')
 def privacy_policy():
     support_email = current_app.config.get('CONTACT_EMAIL') or current_app.config.get('SUPPORT_EMAIL')
-    return render_template('privacy_policy.html', support_email=support_email)
+    retention_days = current_app.config.get('DATA_RETENTION_DAYS')
+    deletion_days = current_app.config.get('DATA_DELETION_REQUEST_DAYS')
+    return render_template(
+        'privacy_policy.html',
+        support_email=support_email,
+        retention_days=retention_days,
+        deletion_days=deletion_days,
+    )
 
 
 @main_bp.route('/terms')
@@ -59,7 +73,8 @@ def terms():
 @main_bp.route('/data-deletion')
 def data_deletion():
     support_email = current_app.config.get('CONTACT_EMAIL') or current_app.config.get('SUPPORT_EMAIL')
-    return render_template('data_deletion.html', support_email=support_email)
+    deletion_days = current_app.config.get('DATA_DELETION_REQUEST_DAYS')
+    return render_template('data_deletion.html', support_email=support_email, deletion_days=deletion_days)
 
 @main_bp.route('/')
 @login_required
@@ -265,6 +280,23 @@ def account_status():
     from .social.linkedin import check_linkedin_account_status
     from flask import current_app
     from .models import DMConversation, DMMessage
+
+    # Cache to reduce repeated calls to Meta/Graph APIs.
+    # Use ?force=1 to bypass cache when you explicitly want a fresh check.
+    force = request.args.get('force') in {'1', 'true', 'yes'}
+    cache_ttl = current_app.config.get('ACCOUNT_STATUS_CACHE_SECONDS', 300)
+    try:
+        cache_ttl = int(cache_ttl)
+    except Exception:
+        cache_ttl = 300
+    cache_ttl = max(0, cache_ttl)
+
+    now = datetime.utcnow()
+    if not force and cache_ttl > 0:
+        cached_value = _ACCOUNT_STATUS_CACHE.get('value')
+        expires_at = _ACCOUNT_STATUS_CACHE.get('expires_at')
+        if cached_value is not None and expires_at and expires_at > now:
+            return jsonify(cached_value)
     
     instagram_status = check_instagram_account_status()
     linkedin_status = check_linkedin_account_status()
@@ -298,10 +330,16 @@ def account_status():
         instagram_status['webhook_linked_previously'] = webhook_linked_previously
         instagram_status['webhook_last_event_at'] = webhook_last_event_at
     
-    return jsonify({
+    payload = {
         'instagram': instagram_status,
-        'linkedin': linkedin_status
-    })
+        'linkedin': linkedin_status,
+    }
+
+    if cache_ttl > 0:
+        _ACCOUNT_STATUS_CACHE['value'] = payload
+        _ACCOUNT_STATUS_CACHE['expires_at'] = now + timedelta(seconds=cache_ttl)
+
+    return jsonify(payload)
 
 @main_bp.route('/uploads/<path:filename>')
 def uploaded_file(filename):

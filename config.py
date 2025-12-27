@@ -47,6 +47,16 @@ class Config:
 
     # Public contact email (used for Privacy Policy / Terms / Data Deletion pages)
     CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', '')
+
+    # Optional policy knobs
+    # If set to a positive integer, the app may retain DM message records for up to this many days.
+    # If unset/empty, retention is "until deleted".
+    DATA_RETENTION_DAYS = os.getenv('DATA_RETENTION_DAYS', '')
+    # Target timeframe to process verified deletion requests (shown on the public page)
+    DATA_DELETION_REQUEST_DAYS = os.getenv('DATA_DELETION_REQUEST_DAYS', '30')
+
+    # Cache TTL for Meta account status checks (seconds). Helps reduce Graph API calls.
+    ACCOUNT_STATUS_CACHE_SECONDS = os.getenv('ACCOUNT_STATUS_CACHE_SECONDS', '300')
     
     # Database Configuration - auto-detects Railway MySQL or PostgreSQL
     SQLALCHEMY_DATABASE_URI = get_database_url()

@@ -6,28 +6,35 @@
   <div class="card">
     <h1 style="margin-top: 0;">User Data Deletion</h1>
 
-    <p>You can request deletion of data associated with your use of this application.</p>
+    <p>You can request deletion of data associated with your use of this application, including data stored from Instagram messaging webhook events.</p>
 
     <h3>How to request deletion</h3>
     <ol>
       <li>Email us a deletion request.</li>
-      <li>Include enough information to identify the data, such as:
-        <ul>
-          <li>Your Instagram username or Instagram User ID (if available)</li>
-          <li>Approximate date/time range of messages</li>
-          <li>Any other identifiers shown in the app (conversation ID)</li>
-        </ul>
-      </li>
+      <li>Include the following so we can locate and verify the correct records:</li>
+      <ul>
+        <li>Your Instagram username (preferred) and/or the Instagram user ID shown in the app (if available)</li>
+        <li>Any conversation identifier visible in the app (if available)</li>
+        <li>Approximate date/time range of messages</li>
+      </ul>
+      <li>If we need additional verification, we may ask follow-up questions to confirm the request.</li>
     </ol>
 
     <h3>What we delete</h3>
     <ul>
-      <li>Stored DM conversations/messages that were received via webhook events (where applicable).</li>
-      <li>Related metadata stored for conversation display and automation.</li>
+      <li>Stored DM conversations/messages received via Instagram webhooks and/or synced via the Graph API (where applicable).</li>
+      <li>Related metadata stored for conversation display and automation (for example, delivery status/errors).</li>
     </ul>
 
     <h3>Processing time</h3>
-    <p>We will respond and process verified deletion requests within a reasonable timeframe.</p>
+    <p>
+      We will respond and process verified deletion requests within
+      {% if deletion_days %}
+        {{ deletion_days }} days.
+      {% else %}
+        a reasonable timeframe.
+      {% endif %}
+    </p>
 
     <h3>Contact</h3>
     <p>
@@ -38,5 +45,7 @@
         the contact email provided in the app listing.
       {% endif %}
     </p>
+
+    <p style="margin-top: 16px; color: #6c757d;">Last updated: Dec 27, 2025</p>
   </div>
 {% endblock %}
