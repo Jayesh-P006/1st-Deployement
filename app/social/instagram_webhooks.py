@@ -295,32 +295,52 @@ def handle_webhook_event(event_data):
         #   }]
         # }
         
-        if event_data.get('object') != 'instagram':
-            return {'success': False, 'error': 'Not an Instagram event'}
+        # Meta can send Instagram messaging webhooks with object "instagram" or "page"
+        # depending on how the subscription is configured.
+        obj_type = event_data.get('object')
+        if obj_type not in {'instagram', 'page'}:
+            current_app.logger.info(f"Webhook object '{obj_type}' received; attempting to parse anyway")
         
         results = []
         
         for entry in event_data.get('entry', []):
-            messaging_events = entry.get('messaging', [])
-            
-            for event in messaging_events:
-                sender_id = event.get('sender', {}).get('id')
+            # Common format: entry.messaging = [{ sender, recipient, timestamp, message: { mid, text } }]
+            messaging_events = entry.get('messaging')
+
+            # Alternate format: entry.changes[].value.messaging = [...]
+            if not messaging_events:
+                messaging_events = []
+                for change in entry.get('changes', []) or []:
+                    value = change.get('value') or {}
+                    if isinstance(value.get('messaging'), list):
+                        messaging_events.extend(value.get('messaging'))
+
+            for event in messaging_events or []:
+                sender_id = (event.get('sender') or {}).get('id')
                 timestamp = event.get('timestamp')
-                
-                # Handle message event
-                if 'message' in event:
-                    message = event['message']
-                    message_id = message.get('mid')
-                    message_text = message.get('text', '')
-                    
-                    if message_text and sender_id:
-                        result = process_instagram_message(
-                            sender_id,
-                            message_id,
-                            message_text,
-                            timestamp
-                        )
-                        results.append(result)
+
+                message = event.get('message')
+                if not isinstance(message, dict):
+                    continue
+
+                # Mid can be present as 'mid' (common) or sometimes as 'id'
+                message_id = message.get('mid') or message.get('id')
+                message_text = message.get('text') or ''
+
+                # Ignore non-text messages for now (attachments, reactions, etc.)
+                if not (message_text and sender_id):
+                    continue
+
+                result = process_instagram_message(
+                    sender_id,
+                    message_id,
+                    message_text,
+                    timestamp
+                )
+                results.append(result)
+
+        if not results:
+            current_app.logger.info('No processable messaging events found in webhook payload')
         
         return {
             'success': True,

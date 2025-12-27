@@ -245,9 +245,40 @@ def account_status():
     """Get connection status for Instagram and LinkedIn accounts"""
     from .social.instagram import check_instagram_account_status
     from .social.linkedin import check_linkedin_account_status
+    from flask import current_app
+    from .models import DMConversation, DMMessage
     
     instagram_status = check_instagram_account_status()
     linkedin_status = check_linkedin_account_status()
+
+    # Webhook status (lightweight heuristics)
+    # - configured: required secrets/tokens exist
+    # - linked_previously: we have ever stored a DM message/conversation (means webhook payloads reached us)
+    webhook_configured = bool(
+        current_app.config.get('WEBHOOK_VERIFY_TOKEN')
+        and current_app.config.get('INSTAGRAM_APP_SECRET')
+    )
+
+    webhook_linked_previously = None
+    webhook_last_event_at = None
+    try:
+        # Prefer last message timestamp if present
+        last_msg = DMMessage.query.order_by(DMMessage.created_at.desc()).first()
+        if last_msg:
+            webhook_linked_previously = True
+            webhook_last_event_at = last_msg.created_at.isoformat() if last_msg.created_at else None
+        else:
+            # Fall back to conversation existence
+            webhook_linked_previously = DMConversation.query.count() > 0
+    except Exception:
+        # DB may be unavailable/misconfigured; return unknown rather than failing the endpoint
+        webhook_linked_previously = None
+        webhook_last_event_at = None
+
+    if isinstance(instagram_status, dict):
+        instagram_status['webhook_configured'] = webhook_configured
+        instagram_status['webhook_linked_previously'] = webhook_linked_previously
+        instagram_status['webhook_last_event_at'] = webhook_last_event_at
     
     return jsonify({
         'instagram': instagram_status,

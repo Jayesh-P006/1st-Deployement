@@ -45,3 +45,9 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Railway CLI artifacts (local tooling)
+railway-cli/
+railway.zip
+railway.exe
+railway-release.json

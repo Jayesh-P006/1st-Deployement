@@ -373,6 +373,34 @@ function checkAccountStatus() {
 function updateAccountStatus(platform, statusData) {
   const statusDiv = document.getElementById(`${platform}Status`);
   const contentDiv = statusDiv.querySelector('.status-content');
+
+  const webhookHtml = (platform === 'instagram') ? (() => {
+    const configured = statusData.webhook_configured;
+    const linked = statusData.webhook_linked_previously;
+    const lastAt = statusData.webhook_last_event_at;
+
+    const configuredText = (configured === true)
+      ? 'Configured'
+      : (configured === false)
+        ? 'Not configured'
+        : 'Unknown';
+
+    const linkedText = (linked === true)
+      ? 'Yes (events received)'
+      : (linked === false)
+        ? 'No (no events received yet)'
+        : 'Unknown';
+
+    const lastText = lastAt ? new Date(lastAt).toLocaleString() : '-';
+
+    return `
+      <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #e9ecef; font-size: 0.85rem;">
+        <div style="color: #495057;"><strong>Webhooks:</strong> ${configuredText}</div>
+        <div style="color: #495057;"><strong>Linked previously:</strong> ${linkedText}</div>
+        <div style="color: #6c757d; margin-top: 0.2rem;"><strong>Last event:</strong> ${lastText}</div>
+      </div>
+    `;
+  })() : '';
   
   if (statusData.status === 'connected') {
     // Connected - show success
@@ -386,6 +414,7 @@ function updateAccountStatus(platform, statusData) {
         ${statusData.name ? `<div style="color: #495057;"><strong>Name:</strong> ${statusData.name}</div>` : ''}
         ${statusData.account_id ? `<div style="color: #6c757d; margin-top: 0.3rem;"><strong>ID:</strong> ${statusData.account_id}</div>` : ''}
       </div>
+      ${webhookHtml}
     `;
     statusDiv.style.borderColor = '#28a745';
   } else if (!statusData.configured) {
@@ -398,6 +427,7 @@ function updateAccountStatus(platform, statusData) {
       <div style="margin-top: 0.8rem; font-size: 0.85rem; color: #6c757d;">
         <p style="margin: 0;">Configure credentials in <code style="background: #f8f9fa; padding: 0.2rem 0.4rem; border-radius: 3px;">config.py</code></p>
       </div>
+      ${webhookHtml}
     `;
     statusDiv.style.borderColor = '#ffc107';
   } else {
@@ -410,6 +440,7 @@ function updateAccountStatus(platform, statusData) {
       <div style="margin-top: 0.8rem; font-size: 0.85rem;">
         <p style="margin: 0; color: #721c24;">${statusData.message}</p>
       </div>
+      ${webhookHtml}
     `;
     statusDiv.style.borderColor = '#dc3545';
   }
