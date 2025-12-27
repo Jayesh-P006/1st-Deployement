@@ -48,8 +48,18 @@ def instagram_webhook():
             # Process in background to return 200 quickly
             # Instagram requires response within 20 seconds
             from . import scheduler
+            app_obj = current_app._get_current_object()
+
+            def _process_webhook_in_app_context(payload):
+                with app_obj.app_context():
+                    try:
+                        result = handle_webhook_event(payload)
+                        app_obj.logger.info(f'Webhook processed: {result}')
+                    except Exception as e:
+                        app_obj.logger.error(f'Webhook background processing error: {e}')
+
             scheduler.add_job(
-                func=handle_webhook_event,
+                func=_process_webhook_in_app_context,
                 args=[event_data],
                 id=f'webhook_{request.headers.get("X-Hub-Signature-256", "unknown")[:16]}',
                 replace_existing=True
