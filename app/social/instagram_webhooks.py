@@ -7,6 +7,7 @@ import requests
 import json
 import hmac
 import hashlib
+import time
 from datetime import datetime
 import threading
 
@@ -67,6 +68,16 @@ def handle_webhook_verification(verify_token, challenge):
     else:
         current_app.logger.warning(f'Webhook verification failed. Expected: {expected_token}, Got: {verify_token}')
         return None
+
+
+def _normalize_message_id(message_id, sender_id=None, timestamp=None, max_length=100):
+    """Ensure instagram_message_id fits DB column (String(100))."""
+    mid = str(message_id or '').strip()
+    if not mid:
+        mid = f"mid-{sender_id or 'unknown'}-{timestamp or int(time.time())}"
+    if len(mid) > max_length:
+        mid = mid[:max_length]
+    return mid
 
 def send_instagram_message(recipient_id, message_text):
     """
@@ -190,6 +201,9 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
             db.session.add(conversation)
             db.session.flush()  # Get ID
         
+        # Normalize message id to fit DB constraint
+        message_id = _normalize_message_id(message_id, sender_id=sender_id, timestamp=timestamp)
+
         # Save incoming message
         incoming_msg = DMMessage(
             conversation_id=conversation.id,
