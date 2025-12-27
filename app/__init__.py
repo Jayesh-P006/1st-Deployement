@@ -154,6 +154,7 @@ def create_app():
     from .training_routes import training_bp
     from .settings_routes import settings_bp
     from .webhook_routes import webhook_bp
+    from .dm_routes import dm_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -162,6 +163,7 @@ def create_app():
     app.register_blueprint(training_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(webhook_bp)
+    app.register_blueprint(dm_bp)
 
     # Expose helper to schedule new job
     @app.before_request

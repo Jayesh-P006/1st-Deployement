@@ -9,20 +9,20 @@
     <h1>Instagram DMs</h1>
     <p>Inbox-style view of your latest conversations and messages.</p>
   </div>
-  <form method="POST" action="{{ url_for('settings.sync_conversations') }}" class="dm-sync">
+  <form method="POST" action="{{ url_for('dm.sync_conversations') }}" class="dm-sync">
     <button type="submit" class="btn">🔄 Sync Previous DMs</button>
     <small>Pulls recent conversations/messages via Graph API (requires messaging permissions).</small>
   </form>
 </div>
 
 <div class="dm-filters">
-  <a href="{{ url_for('settings.conversations', status='all', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+  <a href="{{ url_for('dm.conversations', status='all', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
      class="btn secondary {% if status_filter == 'all' %}active{% endif %}">All ({{ status_counts.all }})</a>
-  <a href="{{ url_for('settings.conversations', status='active', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+  <a href="{{ url_for('dm.conversations', status='active', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
      class="btn secondary {% if status_filter == 'active' %}active{% endif %}">✅ Active ({{ status_counts.active }})</a>
-  <a href="{{ url_for('settings.conversations', status='resolved', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+  <a href="{{ url_for('dm.conversations', status='resolved', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
      class="btn secondary {% if status_filter == 'resolved' %}active{% endif %}">✓ Resolved ({{ status_counts.resolved }})</a>
-  <a href="{{ url_for('settings.conversations', status='archived', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+  <a href="{{ url_for('dm.conversations', status='archived', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
      class="btn secondary {% if status_filter == 'archived' %}active{% endif %}">📦 Archived ({{ status_counts.archived }})</a>
 </div>
 
@@ -31,7 +31,7 @@
   <aside class="dm-list">
     {% for conv in conversations %}
     {% set last_msg = conv.messages.order_by(DMMessage.created_at.desc()).first() %}
-    <a href="{{ url_for('settings.conversations', status=status_filter, conversation_id=conv.id) }}"
+    <a href="{{ url_for('dm.conversations', status=status_filter, conversation_id=conv.id) }}"
        class="dm-list-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
       <div class="dm-list-row">
         <div class="dm-avatar">{{ (conv.instagram_username or conv.instagram_user_id)[0:2]|upper }}</div>
@@ -60,9 +60,9 @@
       <div class="dm-chat-status dm-status-{{ selected_conversation.conversation_status }}">{{ selected_conversation.conversation_status }}</div>
     </div>
 
-    <div class="dm-chat-window">
+    <div class="dm-chat-window" id="chatWindow">
       {% for message in messages %}
-      <div class="dm-bubble-row {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}">
+      <div class="dm-bubble-row {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}" data-message-id="{{ message.id }}">
         <div class="dm-bubble {% if message.sender_type == 'bot' %}bot{% else %}user{% endif %}">
           <div class="dm-bubble-text">{{ message.message_text }}</div>
           <div class="dm-bubble-meta">
@@ -83,8 +83,8 @@
     </div>
 
     <!-- Manual reply composer (emoji friendly) -->
-    <form class="dm-composer" method="POST" action="{{ url_for('settings.reply_conversation', conversation_id=selected_conversation.id) }}">
-      <textarea name="message_text" rows="2" placeholder="Type a reply... emojis supported 😊" required></textarea>
+    <form class="dm-composer" method="POST" action="{{ url_for('dm.reply_conversation', conversation_id=selected_conversation.id) }}" id="replyForm">
+      <textarea name="message_text" rows="2" placeholder="Type a reply... emojis supported 😊" required id="messageInput"></textarea>
       <button type="submit" class="btn">Send</button>
     </form>
     {% else %}
@@ -97,5 +97,151 @@
   <h2 style="color: #999; margin-bottom: 10px;">No conversations found</h2>
   <p style="color: #999;">DM conversations will appear here once users start messaging</p>
 </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if selected_conversation %}
+<script>
+// Real-time message polling - fetch new messages every 3 seconds
+const CONVERSATION_ID = {{ selected_conversation.id }};
+let lastMessageCount = {{ messages|length }};
+let isPolling = true;
+
+function scrollToBottom() {
+  const chatWindow = document.getElementById('chatWindow');
+  if (chatWindow) {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+}
+
+function createMessageBubble(msg) {
+  const row = document.createElement('div');
+  row.className = `dm-bubble-row ${msg.sender_type === 'bot' ? 'outgoing' : 'incoming'}`;
+  row.setAttribute('data-message-id', msg.id);
+  
+  const bubble = document.createElement('div');
+  bubble.className = `dm-bubble ${msg.sender_type === 'bot' ? 'bot' : 'user'}`;
+  
+  const text = document.createElement('div');
+  text.className = 'dm-bubble-text';
+  text.textContent = msg.message_text;
+  bubble.appendChild(text);
+  
+  const meta = document.createElement('div');
+  meta.className = 'dm-bubble-meta';
+  
+  const time = document.createElement('span');
+  time.textContent = msg.created_at_time;
+  meta.appendChild(time);
+  
+  if (msg.is_auto_reply) {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '🤖 Auto-reply';
+    meta.appendChild(tag);
+  }
+  
+  if (!msg.sent_successfully && msg.sender_type === 'bot') {
+    const errorTag = document.createElement('span');
+    errorTag.className = 'tag error';
+    errorTag.textContent = 'Failed';
+    meta.appendChild(errorTag);
+  }
+  
+  bubble.appendChild(meta);
+  
+  if (msg.error_message) {
+    const error = document.createElement('div');
+    error.className = 'dm-bubble-error';
+    error.textContent = '⚠️ ' + msg.error_message;
+    bubble.appendChild(error);
+  }
+  
+  row.appendChild(bubble);
+  return row;
+}
+
+async function pollMessages() {
+  if (!isPolling) return;
+  
+  try {
+    const response = await fetch(`/dm/api/messages/${CONVERSATION_ID}`);
+    const data = await response.json();
+    
+    if (data.success && data.messages.length > lastMessageCount) {
+      // New messages arrived
+      const chatWindow = document.getElementById('chatWindow');
+      const existingIds = new Set(
+        Array.from(chatWindow.querySelectorAll('[data-message-id]'))
+          .map(el => parseInt(el.getAttribute('data-message-id')))
+      );
+      
+      data.messages.forEach(msg => {
+        if (!existingIds.has(msg.id)) {
+          const bubble = createMessageBubble(msg);
+          chatWindow.appendChild(bubble);
+          existingIds.add(msg.id);
+        }
+      });
+      
+      lastMessageCount = data.messages.length;
+      scrollToBottom();
+      
+      // Update conversation header count
+      const headerP = document.querySelector('.dm-chat-header p');
+      if (headerP) {
+        const parts = headerP.textContent.split('·');
+        if (parts.length >= 2) {
+          headerP.textContent = `${data.message_count} messages · ${parts[1].trim()}`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to poll messages:', error);
+  }
+}
+
+// Poll every 3 seconds
+const pollInterval = setInterval(pollMessages, 3000);
+
+// Stop polling when user leaves page
+window.addEventListener('beforeunload', () => {
+  isPolling = false;
+  clearInterval(pollInterval);
+});
+
+// Scroll to bottom on load
+scrollToBottom();
+
+// Handle form submission with AJAX for smoother UX
+document.getElementById('replyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const messageText = formData.get('message_text');
+  
+  if (!messageText.trim()) return;
+  
+  try {
+    const response = await fetch(e.target.action, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (response.ok) {
+      // Clear input
+      document.getElementById('messageInput').value = '';
+      
+      // Trigger immediate poll to show sent message
+      setTimeout(pollMessages, 500);
+    }
+  } catch (error) {
+    console.error('Failed to send reply:', error);
+    // Fallback to normal form submission
+    e.target.submit();
+  }
+});
+</script>
 {% endif %}
 {% endblock %}

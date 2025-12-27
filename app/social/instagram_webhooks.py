@@ -75,8 +75,16 @@ def _normalize_message_id(message_id, sender_id=None, timestamp=None, max_length
     mid = str(message_id or '').strip()
     if not mid:
         mid = f"mid-{sender_id or 'unknown'}-{timestamp or int(time.time())}"
+    
+    # If too long, hash it to preserve uniqueness
     if len(mid) > max_length:
-        mid = mid[:max_length]
+        # Use last 16 chars of the hash to preserve uniqueness
+        import hashlib
+        hash_suffix = hashlib.md5(mid.encode()).hexdigest()[:16]
+        # Keep beginning + hash to stay under limit
+        prefix_len = max_length - 17  # -1 for dash separator
+        mid = mid[:prefix_len] + '-' + hash_suffix
+    
     return mid
 
 def send_instagram_message(recipient_id, message_text):
