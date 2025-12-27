@@ -100,9 +100,6 @@ body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen
 .dm-sync {display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;}
 .dm-sync small {color: #666;}
 
-.dm-filters {display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;}
-.dm-filters .btn.secondary.active {background: #0a66c2; color: #fff;}
-
 .dm-shell {display: grid; grid-template-columns: 320px 1fr; gap: 1rem; background: #fff; border: 1px solid #e9ecef; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.03);}
 .dm-list {background: #f7f9fb; border-right: 1px solid #e9ecef; max-height: 70vh; overflow-y: auto;}
 .dm-list-item {display: block; padding: 14px 16px; text-decoration: none; color: inherit; border-bottom: 1px solid #e9ecef; transition: background 0.2s;}
@@ -115,18 +112,28 @@ body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen
 .dm-name {font-weight: 700; color: #1a1a1a; font-size: 0.95rem;}
 .dm-time {color: #777; font-size: 0.8rem; white-space: nowrap;}
 .dm-list-bottom {display: flex; justify-content: space-between; gap: 6px; align-items: center;}
-.dm-preview {color: #555; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;}
-.dm-status {padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: capitalize; white-space: nowrap;}
-.dm-status-active {background: #e6f4ea; color: #1e7b34;}
-.dm-status-resolved {background: #e7f1ff; color: #0a58ca;}
-.dm-status-archived {background: #f1f3f5; color: #495057;}
+.dm-preview {color: #555; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; max-width: 60%;}
+.dm-badges {display: flex; gap: 4px; align-items: center; flex-shrink: 0;}
 
-.dm-chat {display: flex; flex-direction: column; min-height: 70vh;}
-.dm-chat-header {display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #e9ecef;}
+/* New tag system */
+.dm-tag {padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;}
+.dm-tag-issue {background: #dc3545; color: #fff;}
+.dm-tag-auto-off {background: #f59e0b; color: #fff;}
+
+/* Unread count bubble (WhatsApp style) */
+.dm-unread-bubble {background: #25d366; color: #fff; border-radius: 50%; min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; padding: 0 5px;}
+
+/* Remove old status badges */
+.dm-status {display: none;}
+.dm-status-active, .dm-status-resolved, .dm-status-archived {display: none;}
+
+.dm-chat {display: flex; flex-direction: column; height: 70vh; max-height: 70vh;}
+.dm-chat-header {display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #e9ecef; flex-shrink: 0;}
 .dm-chat-header h2 {margin: 0; font-size: 1.2rem;}
 .dm-chat-header p {margin: 4px 0 0; color: #666; font-size: 0.9rem;}
+.dm-header-badges {display: flex; gap: 6px; align-items: center;}
 
-.dm-chat-window {flex: 1; background: #f5f7fb; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;}
+.dm-chat-window {flex: 1; background: #f5f7fb; padding: 18px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 12px; max-height: calc(70vh - 140px);}
 .dm-bubble-row {display: flex;}
 .dm-bubble-row.outgoing {justify-content: flex-end;}
 .dm-bubble-row.incoming {justify-content: flex-start;}
@@ -142,8 +149,8 @@ body {font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen
 
 .dm-empty-chat {display: flex; align-items: center; justify-content: center; color: #777; height: 100%; padding: 2rem; text-align: center;}
 
-.dm-composer {display: flex; gap: 0.75rem; align-items: flex-start; padding: 14px 16px; border-top: 1px solid #e9ecef; background: #fff;}
-.dm-composer textarea {flex: 1; border: 1.5px solid #dde1e6; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem; resize: vertical; min-height: 48px; font-family: inherit;}
+.dm-composer {display: flex; gap: 0.75rem; align-items: flex-start; padding: 14px 16px; border-top: 1px solid #e9ecef; background: #fff; flex-shrink: 0;}
+.dm-composer textarea {flex: 1; border: 1.5px solid #dde1e6; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem; resize: none; height: 48px; font-family: inherit;}
 .dm-composer textarea:focus {outline: none; border-color: #0a66c2; box-shadow: 0 0 0 3px rgba(10,102,194,0.12);}
 
 @media (max-width: 960px) {

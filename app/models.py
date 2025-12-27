@@ -248,10 +248,11 @@ class DMConversation(db.Model):
     instagram_user_id = db.Column(db.String(100), nullable=False)  # Instagram PSID
     instagram_username = db.Column(db.String(100))
     platform = db.Column(db.String(32), default='instagram')
-    conversation_status = db.Column(db.String(32), default='active')  # active|resolved|archived
+    conversation_status = db.Column(db.String(32), default='active')  # active|resolved|archived (kept for backward compatibility)
     last_message_at = db.Column(db.DateTime, default=datetime.utcnow)
     message_count = db.Column(db.Integer, default=0)
     auto_reply_count = db.Column(db.Integer, default=0)
+    unread_count = db.Column(db.Integer, default=0)  # Number of unread messages from user
     sentiment = db.Column(db.String(32))  # positive|neutral|negative
     tags = db.Column(db.Text)  # JSON array
     notes = db.Column(db.Text)
@@ -259,6 +260,42 @@ class DMConversation(db.Model):
     
     # Relationships
     messages = db.relationship('DMMessage', backref='conversation', lazy='dynamic', cascade='all, delete-orphan', order_by='DMMessage.created_at')
+    
+    def get_display_name(self):
+        """Get a user-friendly display name for this conversation."""
+        if self.instagram_username:
+            return self.instagram_username
+        # Fallback: show last 6 digits of PSID for brevity
+        if self.instagram_user_id and len(self.instagram_user_id) > 6:
+            return f"User #{self.instagram_user_id[-6:]}"
+        return f"User {self.instagram_user_id}"
+    
+    def has_issues(self):
+        """Check if conversation has failed messages or issues."""
+        return self.messages.filter(
+            DMMessage.sender_type == 'bot',
+            DMMessage.sent_successfully == False
+        ).count() > 0
+    
+    def has_auto_chat_off_messages(self):
+        """Check if there are user messages that came when auto-chat was off."""
+        from .models import ChatSettings
+        settings = ChatSettings.query.first()
+        if not settings or settings.auto_reply_enabled:
+            return False
+        # Check if there are recent user messages without bot replies
+        recent_user_msgs = self.messages.filter(
+            DMMessage.sender_type == 'user'
+        ).order_by(DMMessage.created_at.desc()).limit(5).all()
+        for msg in recent_user_msgs:
+            # Check if this message has a bot reply after it
+            has_reply = self.messages.filter(
+                DMMessage.sender_type == 'bot',
+                DMMessage.created_at > msg.created_at
+            ).first()
+            if not has_reply:
+                return True
+        return False
     
     def __repr__(self):
         return f'<DMConversation {self.instagram_username} ({self.message_count} msgs)>'

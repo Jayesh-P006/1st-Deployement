@@ -155,12 +155,13 @@ def get_instagram_username(instagram_user_id):
     token = current_app.config.get('INSTAGRAM_ACCESS_TOKEN')
     
     if not token:
+        current_app.logger.warning('Cannot fetch username: INSTAGRAM_ACCESS_TOKEN not configured')
         return None
     
     try:
         endpoint = f"{API_BASE}/{instagram_user_id}"
         params = {
-            'fields': 'name,username',
+            'fields': 'name,username,profile_pic',
             'access_token': token
         }
         
@@ -168,10 +169,17 @@ def get_instagram_username(instagram_user_id):
         
         if response.status_code == 200:
             data = response.json()
-            return data.get('username') or data.get('name')
+            username = data.get('username') or data.get('name')
+            if username:
+                current_app.logger.info(f'Fetched username for {instagram_user_id}: {username}')
+            return username
         else:
+            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+            error_msg = error_data.get('error', {}).get('message', response.text)
+            current_app.logger.warning(f'Failed to fetch username for {instagram_user_id}: {error_msg}')
             return None
-    except:
+    except Exception as e:
+        current_app.logger.error(f'Error fetching username for {instagram_user_id}: {e}')
         return None
 
 def process_instagram_message(sender_id, message_id, message_text, timestamp):
@@ -235,6 +243,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         # Update conversation
         conversation.last_message_at = datetime.utcnow()
         conversation.message_count += 1
+        conversation.unread_count = (conversation.unread_count or 0) + 1  # Increment unread count
         
         db.session.commit()
         

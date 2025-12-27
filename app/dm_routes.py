@@ -18,15 +18,10 @@ dm_bp = Blueprint('dm', __name__, url_prefix='/dm')
 @login_required
 def conversations():
     """View DM conversations in inbox-style layout"""
-    status_filter = request.args.get('status', 'all')
     selected_conversation_id = request.args.get('conversation_id', type=int)
 
-    query = DMConversation.query
-    
-    if status_filter != 'all':
-        query = query.filter_by(conversation_status=status_filter)
-    
-    conversations_list = query.order_by(DMConversation.last_message_at.desc()).all()
+    # Get all conversations, no filtering by status
+    conversations_list = DMConversation.query.order_by(DMConversation.last_message_at.desc()).all()
 
     selected_conversation = None
     messages = []
@@ -38,22 +33,17 @@ def conversations():
             selected_conversation = conversations_list[0]
 
         messages = selected_conversation.messages.order_by(DMMessage.created_at.asc()).all()
-    
-    # Get status counts
-    status_counts = {
-        'all': DMConversation.query.count(),
-        'active': DMConversation.query.filter_by(conversation_status='active').count(),
-        'resolved': DMConversation.query.filter_by(conversation_status='resolved').count(),
-        'archived': DMConversation.query.filter_by(conversation_status='archived').count(),
-    }
+        
+        # Mark conversation as read when viewing
+        if selected_conversation.unread_count > 0:
+            selected_conversation.unread_count = 0
+            db.session.commit()
     
     return render_template(
         'dm/conversations.html',
         conversations=conversations_list,
         selected_conversation=selected_conversation,
         messages=messages,
-        status_filter=status_filter,
-        status_counts=status_counts,
         DMMessage=DMMessage,
     )
 
@@ -86,13 +76,7 @@ def api_get_messages(conversation_id):
 @login_required
 def api_get_conversations():
     """API endpoint to fetch conversation list with latest message (for AJAX polling)"""
-    status_filter = request.args.get('status', 'all')
-    
-    query = DMConversation.query
-    if status_filter != 'all':
-        query = query.filter_by(conversation_status=status_filter)
-    
-    conversations = query.order_by(DMConversation.last_message_at.desc()).all()
+    conversations = DMConversation.query.order_by(DMConversation.last_message_at.desc()).all()
     
     return jsonify({
         'success': True,
@@ -100,9 +84,13 @@ def api_get_conversations():
             'id': conv.id,
             'instagram_username': conv.instagram_username,
             'instagram_user_id': conv.instagram_user_id,
+            'display_name': conv.get_display_name(),
             'conversation_status': conv.conversation_status,
             'message_count': conv.message_count,
             'auto_reply_count': conv.auto_reply_count,
+            'unread_count': conv.unread_count or 0,
+            'has_issues': conv.has_issues(),
+            'has_auto_chat_off': conv.has_auto_chat_off_messages(),
             'last_message_at': conv.last_message_at.strftime('%Y-%m-%d %H:%M:%S') if conv.last_message_at else None,
             'last_message_preview': (conv.messages.order_by(DMMessage.created_at.desc()).first().message_text[:70] 
                                     if conv.messages.first() else ''),
