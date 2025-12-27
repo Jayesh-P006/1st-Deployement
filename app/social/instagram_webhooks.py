@@ -318,19 +318,28 @@ def handle_webhook_event(event_data):
             current_app.logger.info(f"Webhook object '{obj_type}' received; attempting to parse anyway")
         
         results = []
+        current_app.logger.info(f"Webhook payload received: {json.dumps(event_data)[:2000]}")
         
         def _extract_text_events(entry_obj):
             """Return a list of normalized events: {sender_id, timestamp, message_id, message_text}."""
             extracted = []
 
-            def _add(sender_id, message_text, timestamp=None, message_id=None):
-                if sender_id and message_text:
-                    extracted.append({
-                        'sender_id': sender_id,
-                        'timestamp': timestamp,
-                        'message_id': message_id,
-                        'message_text': message_text,
-                    })
+            def _add(sender_id, message_text, timestamp=None, message_id=None, source=None):
+                if not sender_id:
+                    current_app.logger.info('Skip event: missing sender_id')
+                    return
+                if not message_text:
+                    current_app.logger.info('Skip event: empty message_text')
+                    return
+                # Fallback message id to avoid None/dup issues
+                mid = message_id or f"auto-{timestamp or datetime.utcnow().timestamp()}-{sender_id}"
+                extracted.append({
+                    'sender_id': sender_id,
+                    'timestamp': timestamp,
+                    'message_id': mid,
+                    'message_text': message_text,
+                    'source': source,
+                })
 
             # 1) Standard: entry.messaging[]
             for ev in (entry_obj.get('messaging') or []) if isinstance(entry_obj.get('messaging'), list) else []:
@@ -340,7 +349,7 @@ def handle_webhook_event(event_data):
                 if isinstance(message, dict):
                     message_id = message.get('mid') or message.get('id')
                     message_text = message.get('text') or ''
-                    _add(sender_id, message_text, timestamp=timestamp, message_id=message_id)
+                    _add(sender_id, message_text, timestamp=timestamp, message_id=message_id, source='entry.messaging')
 
             # 2) Alternate: entry.changes[].value.*
             for change in (entry_obj.get('changes') or []) if isinstance(entry_obj.get('changes'), list) else []:
@@ -355,7 +364,7 @@ def handle_webhook_event(event_data):
                         if isinstance(message, dict):
                             message_id = message.get('mid') or message.get('id')
                             message_text = message.get('text') or ''
-                            _add(sender_id, message_text, timestamp=timestamp, message_id=message_id)
+                            _add(sender_id, message_text, timestamp=timestamp, message_id=message_id, source='changes.messaging')
 
                 # 2b) Some integrations deliver a single message-like object in value
                 # Try common fields: value.from.id + value.message/text
@@ -365,12 +374,14 @@ def handle_webhook_event(event_data):
                     sender_id = from_obj.get('id')
                 message_text = value.get('message') or value.get('text')
                 if sender_id and isinstance(message_text, str) and message_text.strip():
-                    _add(sender_id, message_text.strip(), timestamp=value.get('timestamp') or value.get('time'), message_id=value.get('id'))
+                    _add(sender_id, message_text.strip(), timestamp=value.get('timestamp') or value.get('time'), message_id=value.get('id'), source='changes.value')
 
             return extracted
 
         for entry in event_data.get('entry', []) or []:
-            for ev in _extract_text_events(entry):
+            extracted = _extract_text_events(entry)
+            current_app.logger.info(f"Extracted {len(extracted)} text events from entry")
+            for ev in extracted:
                 try:
                     result = process_instagram_message(
                         ev['sender_id'],
@@ -380,7 +391,7 @@ def handle_webhook_event(event_data):
                     )
                     results.append(result)
                 except Exception as e:
-                    current_app.logger.error(f'Error processing extracted event: {e}')
+                    current_app.logger.error(f"Error processing extracted event from {ev.get('source')}: {e}")
 
         if not results:
             current_app.logger.info('No processable messaging events found in webhook payload')
