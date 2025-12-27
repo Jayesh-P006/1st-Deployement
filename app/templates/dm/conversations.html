@@ -38,7 +38,7 @@
               {% if conv.has_auto_chat_off_messages() %}
               <span class="dm-tag dm-tag-auto-off">Auto-Chat-Off</span>
               {% endif %}
-              {% if conv.unread_count and conv.unread_count > 0 %}
+              {% if conv.unread_count is defined and conv.unread_count and conv.unread_count > 0 %}
               <span class="dm-unread-bubble">{{ conv.unread_count }}</span>
               {% endif %}
             </div>

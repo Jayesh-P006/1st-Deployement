@@ -34,10 +34,14 @@ def conversations():
 
         messages = selected_conversation.messages.order_by(DMMessage.created_at.asc()).all()
         
-        # Mark conversation as read when viewing
-        if selected_conversation.unread_count > 0:
-            selected_conversation.unread_count = 0
-            db.session.commit()
+        # Mark conversation as read when viewing (safe check for column existence)
+        try:
+            if selected_conversation.unread_count and selected_conversation.unread_count > 0:
+                selected_conversation.unread_count = 0
+                db.session.commit()
+        except AttributeError:
+            # unread_count column doesn't exist yet in database
+            pass
     
     return render_template(
         'dm/conversations.html',
@@ -88,7 +92,7 @@ def api_get_conversations():
             'conversation_status': conv.conversation_status,
             'message_count': conv.message_count,
             'auto_reply_count': conv.auto_reply_count,
-            'unread_count': conv.unread_count or 0,
+            'unread_count': getattr(conv, 'unread_count', 0) or 0,
             'has_issues': conv.has_issues(),
             'has_auto_chat_off': conv.has_auto_chat_off_messages(),
             'last_message_at': conv.last_message_at.strftime('%Y-%m-%d %H:%M:%S') if conv.last_message_at else None,

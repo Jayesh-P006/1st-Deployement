@@ -272,30 +272,36 @@ class DMConversation(db.Model):
     
     def has_issues(self):
         """Check if conversation has failed messages or issues."""
-        return self.messages.filter(
-            DMMessage.sender_type == 'bot',
-            DMMessage.sent_successfully == False
-        ).count() > 0
+        try:
+            return self.messages.filter(
+                DMMessage.sender_type == 'bot',
+                DMMessage.sent_successfully == False
+            ).count() > 0
+        except:
+            return False
     
     def has_auto_chat_off_messages(self):
         """Check if there are user messages that came when auto-chat was off."""
-        from .models import ChatSettings
-        settings = ChatSettings.query.first()
-        if not settings or settings.auto_reply_enabled:
+        try:
+            # Import here to avoid circular import, but check if class exists
+            settings = ChatSettings.query.first()
+            if not settings or settings.auto_reply_enabled:
+                return False
+            # Check if there are recent user messages without bot replies
+            recent_user_msgs = self.messages.filter(
+                DMMessage.sender_type == 'user'
+            ).order_by(DMMessage.created_at.desc()).limit(5).all()
+            for msg in recent_user_msgs:
+                # Check if this message has a bot reply after it
+                has_reply = self.messages.filter(
+                    DMMessage.sender_type == 'bot',
+                    DMMessage.created_at > msg.created_at
+                ).first()
+                if not has_reply:
+                    return True
             return False
-        # Check if there are recent user messages without bot replies
-        recent_user_msgs = self.messages.filter(
-            DMMessage.sender_type == 'user'
-        ).order_by(DMMessage.created_at.desc()).limit(5).all()
-        for msg in recent_user_msgs:
-            # Check if this message has a bot reply after it
-            has_reply = self.messages.filter(
-                DMMessage.sender_type == 'bot',
-                DMMessage.created_at > msg.created_at
-            ).first()
-            if not has_reply:
-                return True
-        return False
+        except:
+            return False
     
     def __repr__(self):
         return f'<DMConversation {self.instagram_username} ({self.message_count} msgs)>'

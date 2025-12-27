@@ -243,7 +243,11 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         # Update conversation
         conversation.last_message_at = datetime.utcnow()
         conversation.message_count += 1
-        conversation.unread_count = (conversation.unread_count or 0) + 1  # Increment unread count
+        # Increment unread count if column exists
+        try:
+            conversation.unread_count = (conversation.unread_count or 0) + 1
+        except AttributeError:
+            pass  # Column doesn't exist yet
         
         db.session.commit()
         
