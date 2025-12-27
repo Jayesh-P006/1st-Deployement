@@ -204,6 +204,15 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         # Normalize message id to fit DB constraint
         message_id = _normalize_message_id(message_id, sender_id=sender_id, timestamp=timestamp)
 
+        # Skip duplicates if already stored
+        if DMMessage.query.filter_by(instagram_message_id=message_id).first():
+            current_app.logger.info(f"Skip duplicate message_id={message_id}")
+            return {
+                'success': True,
+                'replied': False,
+                'reason': 'duplicate_message',
+            }
+
         # Save incoming message
         incoming_msg = DMMessage(
             conversation_id=conversation.id,
