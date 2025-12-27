@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}User Data Deletion{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1 style="margin-top: 0;">User Data Deletion</h1>
+
+    <p>You can request deletion of data associated with your use of this application.</p>
+
+    <h3>How to request deletion</h3>
+    <ol>
+      <li>Email us a deletion request.</li>
+      <li>Include enough information to identify the data, such as:
+        <ul>
+          <li>Your Instagram username or Instagram User ID (if available)</li>
+          <li>Approximate date/time range of messages</li>
+          <li>Any other identifiers shown in the app (conversation ID)</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h3>What we delete</h3>
+    <ul>
+      <li>Stored DM conversations/messages that were received via webhook events (where applicable).</li>
+      <li>Related metadata stored for conversation display and automation.</li>
+    </ul>
+
+    <h3>Processing time</h3>
+    <p>We will respond and process verified deletion requests within a reasonable timeframe.</p>
+
+    <h3>Contact</h3>
+    <p>
+      Send requests to:
+      {% if support_email %}
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+      {% else %}
+        the contact email provided in the app listing.
+      {% endif %}
+    </p>
+  </div>
+{% endblock %}

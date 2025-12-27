@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1 style="margin-top: 0;">Privacy Policy</h1>
+    <p>This Privacy Policy describes how this application ("we", "us") collects, uses, and protects information when you use the service.</p>
+
+    <h3>What data we process</h3>
+    <ul>
+      <li><strong>Account data</strong>: username/email you use to access this app.</li>
+      <li><strong>Instagram DM webhook events</strong>: message metadata and content that Instagram sends to our webhook endpoint so we can display and (optionally) auto-reply.</li>
+      <li><strong>Operational logs</strong>: basic logs to keep the service reliable (errors, request timestamps).</li>
+    </ul>
+
+    <h3>How we use data</h3>
+    <ul>
+      <li>To receive and process Instagram webhook events.</li>
+      <li>To display DM conversations in the app and enable features like conversation management/auto-replies.</li>
+      <li>To maintain security, prevent abuse, and debug issues.</li>
+    </ul>
+
+    <h3>Data sharing</h3>
+    <p>We do not sell your personal data. We share data only as required to operate the service (for example, hosting/database providers) or to comply with legal obligations.</p>
+
+    <h3>Data retention</h3>
+    <p>We retain data only as long as needed for the features you use and operational/security purposes. You can request deletion at any time (see the Data Deletion page).</p>
+
+    <h3>Security</h3>
+    <p>We use reasonable safeguards to protect data, but no method of transmission or storage is 100% secure.</p>
+
+    <h3>Contact</h3>
+    <p>
+      If you have questions or requests about this policy, contact us at:
+      {% if support_email %}
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+      {% else %}
+        the contact email provided in the app listing.
+      {% endif %}
+    </p>
+  </div>
+{% endblock %}

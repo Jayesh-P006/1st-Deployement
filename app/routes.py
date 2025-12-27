@@ -43,6 +43,24 @@ def convert_utc_to_local(utc_dt, tz_name='Asia/Kolkata'):
 
 main_bp = Blueprint('main', __name__)
 
+
+@main_bp.route('/privacy-policy')
+def privacy_policy():
+    support_email = current_app.config.get('CONTACT_EMAIL') or current_app.config.get('SUPPORT_EMAIL')
+    return render_template('privacy_policy.html', support_email=support_email)
+
+
+@main_bp.route('/terms')
+def terms():
+    support_email = current_app.config.get('CONTACT_EMAIL') or current_app.config.get('SUPPORT_EMAIL')
+    return render_template('terms.html', support_email=support_email)
+
+
+@main_bp.route('/data-deletion')
+def data_deletion():
+    support_email = current_app.config.get('CONTACT_EMAIL') or current_app.config.get('SUPPORT_EMAIL')
+    return render_template('data_deletion.html', support_email=support_email)
+
 @main_bp.route('/')
 @login_required
 def index():

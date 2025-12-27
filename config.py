@@ -44,6 +44,9 @@ def get_database_url():
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+
+    # Public contact email (used for Privacy Policy / Terms / Data Deletion pages)
+    CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', '')
     
     # Database Configuration - auto-detects Railway MySQL or PostgreSQL
     SQLALCHEMY_DATABASE_URI = get_database_url()

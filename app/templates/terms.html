@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Terms of Service{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1 style="margin-top: 0;">Terms of Service</h1>
+    <p>By using this application, you agree to these Terms of Service.</p>
+
+    <h3>Use of the service</h3>
+    <ul>
+      <li>You are responsible for your use of the service and for complying with applicable laws and platform policies.</li>
+      <li>You must not attempt to abuse, disrupt, or reverse engineer the service.</li>
+    </ul>
+
+    <h3>Third-party services</h3>
+    <p>This app may integrate with third-party platforms (for example, Instagram/Facebook). Your use of those platforms is governed by their terms and policies.</p>
+
+    <h3>Availability</h3>
+    <p>We may modify, suspend, or discontinue the service at any time. We do not guarantee uninterrupted availability.</p>
+
+    <h3>Limitation of liability</h3>
+    <p>To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages, or any loss of data, arising from your use of the service.</p>
+
+    <h3>Contact</h3>
+    <p>
+      Questions about these terms can be sent to:
+      {% if support_email %}
+        <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+      {% else %}
+        the contact email provided in the app listing.
+      {% endif %}
+    </p>
+  </div>
+{% endblock %}
