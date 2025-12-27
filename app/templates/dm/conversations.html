@@ -7,6 +7,15 @@
   <a href="{{ url_for('settings.index') }}" class="btn secondary" style="margin-bottom: 15px;">← Back to Settings</a>
   <h1 style="margin-bottom: 10px;">💬 DM Conversations</h1>
   <p style="color: #666;">View and manage Instagram direct message conversations</p>
+
+  <form method="POST" action="{{ url_for('settings.sync_conversations') }}" style="margin-top: 12px;">
+    <button type="submit" class="btn" style="background: #0a66c2; color: #fff;">
+      🔄 Sync Previous DMs
+    </button>
+    <small style="display: block; margin-top: 6px; color: #666;">
+      Pulls recent Instagram conversations/messages via Graph API (requires messaging permissions).
+    </small>
+  </form>
 </div>
 
 <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">

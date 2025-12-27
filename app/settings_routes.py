@@ -212,6 +212,30 @@ def conversations():
                          status_filter=status_filter,
                          status_counts=status_counts)
 
+
+@settings_bp.route('/conversations/sync', methods=['POST'])
+@login_required
+def sync_conversations():
+    """Sync previous Instagram DMs via Graph API (best-effort)."""
+    try:
+        from .social.instagram_dm_sync import sync_previous_instagram_dms
+
+        max_conversations = int(request.form.get('max_conversations', 50))
+        max_messages = int(request.form.get('max_messages', 50))
+
+        summary = sync_previous_instagram_dms(
+            max_conversations=max_conversations,
+            max_messages_per_conversation=max_messages,
+        )
+        flash(
+            f"Sync complete: {summary['messages_created']} messages added (skipped {summary['messages_skipped_existing']} existing).",
+            'success'
+        )
+    except Exception as e:
+        flash(f"Sync failed: {e}", 'error')
+
+    return redirect(url_for('settings.conversations'))
+
 @settings_bp.route('/conversations/<int:conversation_id>')
 @login_required
 def view_conversation(conversation_id):
