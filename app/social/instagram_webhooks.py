@@ -100,7 +100,8 @@ def send_instagram_message(recipient_id, message_text):
             'error': 'Instagram credentials not configured'
         }
     
-    endpoint = f"{API_BASE}/me/messages"
+    # Use the business account id for the messages endpoint; "me" fails for IG DMs.
+    endpoint = f"{API_BASE}/{business_id}/messages"
     
     payload = {
         'recipient': {'id': recipient_id},

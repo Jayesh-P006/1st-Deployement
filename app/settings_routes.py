@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from . import db
 from .models import ChatSettings, DMConversation, DMMessage
 from .auth import login_required, role_required
+from .social.instagram_webhooks import send_instagram_message, _normalize_message_id
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -191,6 +192,7 @@ def api_status():
 def conversations():
     """View DM conversations and history"""
     status_filter = request.args.get('status', 'all')
+    selected_conversation_id = request.args.get('conversation_id', type=int)
     
     query = DMConversation.query
     
@@ -198,6 +200,17 @@ def conversations():
         query = query.filter_by(conversation_status=status_filter)
     
     conversations_list = query.order_by(DMConversation.last_message_at.desc()).all()
+
+    selected_conversation = None
+    messages = []
+
+    if conversations_list:
+        if selected_conversation_id:
+            selected_conversation = next((c for c in conversations_list if c.id == selected_conversation_id), None)
+        if not selected_conversation:
+            selected_conversation = conversations_list[0]
+
+        messages = selected_conversation.messages.order_by(DMMessage.created_at.asc()).all()
     
     # Get status counts
     status_counts = {
@@ -207,10 +220,15 @@ def conversations():
         'archived': DMConversation.query.filter_by(conversation_status='archived').count(),
     }
     
-    return render_template('dm/conversations.html', 
-                         conversations=conversations_list,
-                         status_filter=status_filter,
-                         status_counts=status_counts)
+    return render_template(
+        'dm/conversations.html',
+        conversations=conversations_list,
+        selected_conversation=selected_conversation,
+        messages=messages,
+        status_filter=status_filter,
+        status_counts=status_counts,
+        DMMessage=DMMessage,
+    )
 
 
 @settings_bp.route('/conversations/sync', methods=['POST'])
@@ -271,3 +289,50 @@ def update_conversation_status(conversation_id):
         flash('Invalid status.', 'error')
     
     return redirect(url_for('settings.view_conversation', conversation_id=conversation_id))
+
+
+@settings_bp.route('/conversations/<int:conversation_id>/reply', methods=['POST'])
+@login_required
+def reply_conversation(conversation_id):
+    """Send a manual reply to an Instagram DM thread."""
+    conversation = DMConversation.query.get_or_404(conversation_id)
+    message_text = (request.form.get('message_text') or '').strip()
+
+    if not message_text:
+        flash('Reply cannot be empty.', 'error')
+        return redirect(url_for('settings.conversations', conversation_id=conversation_id))
+
+    # Send via Instagram Graph
+    send_result = send_instagram_message(conversation.instagram_user_id, message_text)
+
+    # Record the outgoing message regardless of success so history is visible
+    message_id = _normalize_message_id(
+        send_result.get('message_id') or f"manual-{conversation_id}-{int(datetime.utcnow().timestamp())}",
+        sender_id=conversation.instagram_user_id,
+    )
+
+    outgoing = DMMessage(
+        conversation_id=conversation.id,
+        instagram_message_id=message_id,
+        sender_type='bot',
+        message_text=message_text,
+        is_auto_reply=False,
+        sent_successfully=send_result.get('success', False),
+        error_message=send_result.get('error'),
+    )
+    db.session.add(outgoing)
+
+    conversation.message_count = (conversation.message_count or 0) + 1
+    conversation.last_message_at = datetime.utcnow()
+
+    try:
+        db.session.commit()
+        if send_result.get('success'):
+            flash('Reply sent.', 'success')
+        else:
+            flash(f"Reply saved but send failed: {send_result.get('error')}", 'error')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Could not save reply: {e}', 'error')
+
+    return redirect(url_for('settings.conversations', conversation_id=conversation_id))

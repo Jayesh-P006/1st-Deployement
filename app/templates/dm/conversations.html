@@ -3,87 +3,94 @@
 {% block title %}DM Conversations{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 20px;">
-  <a href="{{ url_for('settings.index') }}" class="btn secondary" style="margin-bottom: 15px;">← Back to Settings</a>
-  <h1 style="margin-bottom: 10px;">💬 DM Conversations</h1>
-  <p style="color: #666;">View and manage Instagram direct message conversations</p>
-
-  <form method="POST" action="{{ url_for('settings.sync_conversations') }}" style="margin-top: 12px;">
-    <button type="submit" class="btn" style="background: #0a66c2; color: #fff;">
-      🔄 Sync Previous DMs
-    </button>
-    <small style="display: block; margin-top: 6px; color: #666;">
-      Pulls recent Instagram conversations/messages via Graph API (requires messaging permissions).
-    </small>
+<div class="dm-header">
+  <div>
+    <a href="{{ url_for('settings.index') }}" class="btn secondary">← Back to Settings</a>
+    <h1>Instagram DMs</h1>
+    <p>Inbox-style view of your latest conversations and messages.</p>
+  </div>
+  <form method="POST" action="{{ url_for('settings.sync_conversations') }}" class="dm-sync">
+    <button type="submit" class="btn">🔄 Sync Previous DMs</button>
+    <small>Pulls recent conversations/messages via Graph API (requires messaging permissions).</small>
   </form>
 </div>
 
-<div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
-  <a href="{{ url_for('settings.conversations', status='all') }}" 
-     class="btn secondary {% if status_filter == 'all' %}active{% endif %}"
-     style="{% if status_filter == 'all' %}background: #0a66c2; color: #fff;{% endif %}">
-    All ({{ status_counts.all }})
-  </a>
-  <a href="{{ url_for('settings.conversations', status='active') }}" 
-     class="btn secondary {% if status_filter == 'active' %}active{% endif %}"
-     style="{% if status_filter == 'active' %}background: #0a66c2; color: #fff;{% endif %}">
-    ✅ Active ({{ status_counts.active }})
-  </a>
-  <a href="{{ url_for('settings.conversations', status='resolved') }}" 
-     class="btn secondary {% if status_filter == 'resolved' %}active{% endif %}"
-     style="{% if status_filter == 'resolved' %}background: #0a66c2; color: #fff;{% endif %}">
-    ✓ Resolved ({{ status_counts.resolved }})
-  </a>
-  <a href="{{ url_for('settings.conversations', status='archived') }}" 
-     class="btn secondary {% if status_filter == 'archived' %}active{% endif %}"
-     style="{% if status_filter == 'archived' %}background: #0a66c2; color: #fff;{% endif %}">
-    📦 Archived ({{ status_counts.archived }})
-  </a>
+<div class="dm-filters">
+  <a href="{{ url_for('settings.conversations', status='all', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+     class="btn secondary {% if status_filter == 'all' %}active{% endif %}">All ({{ status_counts.all }})</a>
+  <a href="{{ url_for('settings.conversations', status='active', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+     class="btn secondary {% if status_filter == 'active' %}active{% endif %}">✅ Active ({{ status_counts.active }})</a>
+  <a href="{{ url_for('settings.conversations', status='resolved', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+     class="btn secondary {% if status_filter == 'resolved' %}active{% endif %}">✓ Resolved ({{ status_counts.resolved }})</a>
+  <a href="{{ url_for('settings.conversations', status='archived', conversation_id=selected_conversation.id if selected_conversation else None) }}" 
+     class="btn secondary {% if status_filter == 'archived' %}active{% endif %}">📦 Archived ({{ status_counts.archived }})</a>
 </div>
 
 {% if conversations %}
-<div style="display: grid; gap: 15px;">
-  {% for conv in conversations %}
-  <a href="{{ url_for('settings.view_conversation', conversation_id=conv.id) }}" 
-     style="text-decoration: none; color: inherit;">
-    <div class="card" style="border-left: 4px solid {% if conv.conversation_status == 'active' %}#28a745{% elif conv.conversation_status == 'resolved' %}#0a66c2{% else %}#6c757d{% endif %}; transition: transform 0.2s, box-shadow 0.2s;"
-         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
-         onmouseout="this.style.transform=''; this.style.boxShadow='';">
-      
-      <div style="display: flex; justify-content: space-between; align-items: start;">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-            <h3 style="margin: 0; color: #1a1a1a;">
-              {{ conv.instagram_username or 'User ' + conv.instagram_user_id }}
-            </h3>
-            <span class="badge" style="background: {% if conv.conversation_status == 'active' %}#28a745{% elif conv.conversation_status == 'resolved' %}#0a66c2{% else %}#6c757d{% endif %}; color: white;">
-              {{ conv.conversation_status }}
-            </span>
-            {% if conv.sentiment %}
-            <span class="badge" style="background: {% if conv.sentiment == 'positive' %}#28a745{% elif conv.sentiment == 'negative' %}#dc3545{% else %}#f59e0b{% endif %}; color: white;">
-              {% if conv.sentiment == 'positive' %}😊{% elif conv.sentiment == 'negative' %}😞{% else %}😐{% endif %} {{ conv.sentiment }}
-            </span>
-            {% endif %}
+<div class="dm-shell">
+  <aside class="dm-list">
+    {% for conv in conversations %}
+    {% set last_msg = conv.messages.order_by(DMMessage.created_at.desc()).first() %}
+    <a href="{{ url_for('settings.conversations', status=status_filter, conversation_id=conv.id) }}"
+       class="dm-list-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
+      <div class="dm-list-row">
+        <div class="dm-avatar">{{ (conv.instagram_username or conv.instagram_user_id)[0:2]|upper }}</div>
+        <div class="dm-list-meta">
+          <div class="dm-list-top">
+            <span class="dm-name">{{ conv.instagram_username or 'User ' + conv.instagram_user_id }}</span>
+            <span class="dm-time">{{ (last_msg.created_at.strftime('%b %d, %H:%M')) if last_msg else '' }}</span>
           </div>
-          
-          <div style="display: flex; gap: 20px; margin-bottom: 10px; font-size: 14px; color: #666;">
-            <span>💬 {{ conv.message_count }} messages</span>
-            <span>🤖 {{ conv.auto_reply_count }} auto-replies</span>
-            <span>🕐 Last: {{ conv.last_message_at.strftime('%Y-%m-%d %H:%M') }}</span>
+          <div class="dm-list-bottom">
+            <span class="dm-preview">{{ (last_msg.message_text[:70] + ('…' if last_msg and last_msg.message_text|length > 70 else '')) if last_msg else 'No messages yet' }}</span>
+            <span class="dm-status dm-status-{{ conv.conversation_status }}">{{ conv.conversation_status }}</span>
           </div>
-          
-          {% if conv.notes %}
-          <p style="color: #666; margin: 0; font-size: 14px;">📝 {{ conv.notes[:100] }}{% if conv.notes|length > 100 %}...{% endif %}</p>
-          {% endif %}
-        </div>
-        
-        <div style="margin-left: 20px;">
-          <span class="btn secondary" style="padding: 8px 15px;">View →</span>
         </div>
       </div>
+    </a>
+    {% endfor %}
+  </aside>
+
+  <section class="dm-chat">
+    {% if selected_conversation %}
+    <div class="dm-chat-header">
+      <div>
+        <h2>{{ selected_conversation.instagram_username or 'User ' + selected_conversation.instagram_user_id }}</h2>
+        <p>{{ selected_conversation.message_count }} messages · {{ selected_conversation.auto_reply_count }} auto-replies</p>
+      </div>
+      <div class="dm-chat-status dm-status-{{ selected_conversation.conversation_status }}">{{ selected_conversation.conversation_status }}</div>
     </div>
-  </a>
-  {% endfor %}
+
+    <div class="dm-chat-window">
+      {% for message in messages %}
+      <div class="dm-bubble-row {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}">
+        <div class="dm-bubble {% if message.sender_type == 'bot' %}bot{% else %}user{% endif %}">
+          <div class="dm-bubble-text">{{ message.message_text }}</div>
+          <div class="dm-bubble-meta">
+            <span>{{ message.created_at.strftime('%H:%M') }}</span>
+            {% if message.is_auto_reply %}<span class="tag">🤖 Auto-reply</span>{% endif %}
+            {% if not message.sent_successfully and message.sender_type == 'bot' %}<span class="tag error">Failed</span>{% endif %}
+          </div>
+          {% if message.error_message %}
+          <div class="dm-bubble-error">⚠️ {{ message.error_message }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if not messages %}
+      <div class="dm-empty-chat">No messages yet</div>
+      {% endif %}
+    </div>
+
+    <!-- Manual reply composer (emoji friendly) -->
+    <form class="dm-composer" method="POST" action="{{ url_for('settings.reply_conversation', conversation_id=selected_conversation.id) }}">
+      <textarea name="message_text" rows="2" placeholder="Type a reply... emojis supported 😊" required></textarea>
+      <button type="submit" class="btn">Send</button>
+    </form>
+    {% else %}
+    <div class="dm-empty-chat">Select a conversation to view messages.</div>
+    {% endif %}
+  </section>
 </div>
 {% else %}
 <div class="card" style="text-align: center; padding: 60px 20px;">
