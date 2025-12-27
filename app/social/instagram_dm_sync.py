@@ -5,6 +5,12 @@ from flask import current_app
 API_BASE = 'https://graph.facebook.com/v19.0'
 
 
+class InstagramGraphPermissionError(RuntimeError):
+    def __init__(self, message: str, required_permission: str | None = None):
+        super().__init__(message)
+        self.required_permission = required_permission
+
+
 def _get_token_and_business_id():
     token = current_app.config.get('INSTAGRAM_ACCESS_TOKEN')
     business_id = current_app.config.get('INSTAGRAM_BUSINESS_ACCOUNT_ID')
@@ -23,6 +29,23 @@ def _iter_paged(url, params=None, max_pages=50, timeout=20):
                 err = resp.json()
             except Exception:
                 err = {'message': resp.text}
+
+            # Try to surface missing permission issues as a clearer, typed error
+            try:
+                err_obj = (err or {}).get('error') or {}
+                err_msg = err_obj.get('message') or ''
+                err_code = err_obj.get('code')
+                # Common permission failure for inbox/conversations
+                if resp.status_code in (401, 403) and err_code == 298 and 'read_mailbox' in err_msg:
+                    raise InstagramGraphPermissionError(
+                        f"Graph API permission missing: {err_msg}",
+                        required_permission='read_mailbox'
+                    )
+            except InstagramGraphPermissionError:
+                raise
+            except Exception:
+                pass
+
             raise RuntimeError(f'Graph API error (HTTP {resp.status_code}): {err}')
 
         data = resp.json()

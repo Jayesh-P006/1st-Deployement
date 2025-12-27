@@ -218,7 +218,7 @@ def conversations():
 def sync_conversations():
     """Sync previous Instagram DMs via Graph API (best-effort)."""
     try:
-        from .social.instagram_dm_sync import sync_previous_instagram_dms
+        from .social.instagram_dm_sync import sync_previous_instagram_dms, InstagramGraphPermissionError
 
         max_conversations = int(request.form.get('max_conversations', 50))
         max_messages = int(request.form.get('max_messages', 50))
@@ -231,6 +231,15 @@ def sync_conversations():
             f"Sync complete: {summary['messages_created']} messages added (skipped {summary['messages_skipped_existing']} existing).",
             'success'
         )
+    except InstagramGraphPermissionError as e:
+        if getattr(e, 'required_permission', None) == 'read_mailbox':
+            flash(
+                "Sync failed: Meta blocked access to inbox history. Your token/app needs the extended permission 'read_mailbox' (requires Meta App Review) to read previous conversations. "
+                "Until that permission is granted, we can only rely on webhooks for new messages.",
+                'error'
+            )
+        else:
+            flash(f"Sync failed: {e}", 'error')
     except Exception as e:
         flash(f"Sync failed: {e}", 'error')
 
