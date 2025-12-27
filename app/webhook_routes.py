@@ -44,28 +44,12 @@ def instagram_webhook():
         try:
             event_data = request.get_json()
             current_app.logger.info(f'Received webhook event: {event_data}')
-            
-            # Process in background to return 200 quickly
-            # Instagram requires response within 20 seconds
-            from . import scheduler
-            app_obj = current_app._get_current_object()
 
-            def _process_webhook_in_app_context(payload):
-                with app_obj.app_context():
-                    try:
-                        result = handle_webhook_event(payload)
-                        app_obj.logger.info(f'Webhook processed: {result}')
-                    except Exception as e:
-                        app_obj.logger.error(f'Webhook background processing error: {e}')
-
-            scheduler.add_job(
-                func=_process_webhook_in_app_context,
-                args=[event_data],
-                id=f'webhook_{request.headers.get("X-Hub-Signature-256", "unknown")[:16]}',
-                replace_existing=True
-            )
-            
-            return jsonify({'status': 'received'}), 200
+            # Process immediately so incoming DMs are stored right away.
+            # Any slow work (AI reply / outgoing message) is handled asynchronously inside the handler.
+            result = handle_webhook_event(event_data)
+            current_app.logger.info(f'Webhook processed: {result}')
+            return jsonify({'status': 'received', 'processed': result.get('processed', 0)}), 200
         
         except Exception as e:
             current_app.logger.error(f'Webhook processing error: {e}')

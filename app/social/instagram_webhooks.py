@@ -8,6 +8,7 @@ import json
 import hmac
 import hashlib
 from datetime import datetime
+import threading
 
 API_BASE = 'https://graph.facebook.com/v19.0'
 
@@ -167,7 +168,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         dict: Processing result
     """
     from .. import db
-    from ..models import DMConversation, DMMessage, ChatSettings
+    from ..models import DMConversation, DMMessage
     from ..ai.gemini_service import generate_reply, should_auto_reply, generate_fallback_response
     
     current_app.logger.info(f'Processing message from {sender_id}: {message_text[:50]}...')
@@ -205,56 +206,71 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         
         db.session.commit()
         
-        # Check if we should auto-reply
+        # Check if we should auto-reply.
+        # IMPORTANT: Reply generation/sending can be slow; we do it asynchronously so webhook responses stay fast.
         should_reply, reason = should_auto_reply(message_text, conversation)
-        
         if not should_reply:
             current_app.logger.info(f'Not replying: {reason}')
             return {
                 'success': True,
                 'replied': False,
-                'reason': reason
+                'reason': reason,
             }
-        
-        # Generate reply using Gemini
-        reply_result = generate_reply(conversation, message_text)
-        
-        if not reply_result['success']:
-            current_app.logger.error(f"Gemini error: {reply_result['error']}")
-            # Use fallback message
-            reply_text = generate_fallback_response()
-        else:
-            reply_text = reply_result['reply']
-        
-        # Send reply via Instagram API
-        send_result = send_instagram_message(sender_id, reply_text)
-        
-        # Save outgoing message
-        outgoing_msg = DMMessage(
-            conversation_id=conversation.id,
-            instagram_message_id=send_result.get('message_id'),
-            sender_type='bot',
-            message_text=reply_text,
-            is_auto_reply=True,
-            gemini_prompt_used=reply_result.get('prompt'),
-            gemini_response_time=reply_result.get('response_time'),
-            sent_successfully=send_result['success'],
-            error_message=send_result.get('error')
-        )
-        db.session.add(outgoing_msg)
-        
-        # Update conversation
-        conversation.message_count += 1
-        if send_result['success']:
-            conversation.auto_reply_count += 1
-        
-        db.session.commit()
-        
+
+        app_obj = current_app._get_current_object()
+        conversation_id = conversation.id
+
+        def _send_reply_async():
+            from .. import db as _db
+            from ..models import DMConversation as _DMConversation, DMMessage as _DMMessage
+
+            with app_obj.app_context():
+                try:
+                    conv = _DMConversation.query.get(conversation_id)
+                    if not conv:
+                        app_obj.logger.warning('Async reply: conversation missing')
+                        return
+
+                    reply_result = generate_reply(conv, message_text)
+                    if not reply_result.get('success'):
+                        app_obj.logger.error(f"Gemini error: {reply_result.get('error')}")
+                        reply_text = generate_fallback_response()
+                    else:
+                        reply_text = reply_result.get('reply')
+
+                    send_result = send_instagram_message(sender_id, reply_text)
+
+                    outgoing_msg = _DMMessage(
+                        conversation_id=conv.id,
+                        instagram_message_id=send_result.get('message_id'),
+                        sender_type='bot',
+                        message_text=reply_text,
+                        is_auto_reply=True,
+                        gemini_prompt_used=reply_result.get('prompt'),
+                        gemini_response_time=reply_result.get('response_time'),
+                        sent_successfully=send_result.get('success', False),
+                        error_message=send_result.get('error'),
+                    )
+                    _db.session.add(outgoing_msg)
+
+                    conv.message_count = (conv.message_count or 0) + 1
+                    if send_result.get('success'):
+                        conv.auto_reply_count = (conv.auto_reply_count or 0) + 1
+
+                    _db.session.commit()
+                except Exception as e:
+                    app_obj.logger.error(f'Async auto-reply error: {e}')
+                    try:
+                        _db.session.rollback()
+                    except Exception:
+                        pass
+
+        threading.Thread(target=_send_reply_async, daemon=True).start()
+
         return {
             'success': True,
-            'replied': send_result['success'],
-            'reply_text': reply_text,
-            'error': send_result.get('error')
+            'replied': True,
+            'reason': 'Queued auto-reply',
         }
     
     except Exception as e:
@@ -303,41 +319,68 @@ def handle_webhook_event(event_data):
         
         results = []
         
-        for entry in event_data.get('entry', []):
-            # Common format: entry.messaging = [{ sender, recipient, timestamp, message: { mid, text } }]
-            messaging_events = entry.get('messaging')
+        def _extract_text_events(entry_obj):
+            """Return a list of normalized events: {sender_id, timestamp, message_id, message_text}."""
+            extracted = []
 
-            # Alternate format: entry.changes[].value.messaging = [...]
-            if not messaging_events:
-                messaging_events = []
-                for change in entry.get('changes', []) or []:
-                    value = change.get('value') or {}
-                    if isinstance(value.get('messaging'), list):
-                        messaging_events.extend(value.get('messaging'))
+            def _add(sender_id, message_text, timestamp=None, message_id=None):
+                if sender_id and message_text:
+                    extracted.append({
+                        'sender_id': sender_id,
+                        'timestamp': timestamp,
+                        'message_id': message_id,
+                        'message_text': message_text,
+                    })
 
-            for event in messaging_events or []:
-                sender_id = (event.get('sender') or {}).get('id')
-                timestamp = event.get('timestamp')
+            # 1) Standard: entry.messaging[]
+            for ev in (entry_obj.get('messaging') or []) if isinstance(entry_obj.get('messaging'), list) else []:
+                sender_id = (ev.get('sender') or {}).get('id')
+                timestamp = ev.get('timestamp')
+                message = ev.get('message')
+                if isinstance(message, dict):
+                    message_id = message.get('mid') or message.get('id')
+                    message_text = message.get('text') or ''
+                    _add(sender_id, message_text, timestamp=timestamp, message_id=message_id)
 
-                message = event.get('message')
-                if not isinstance(message, dict):
-                    continue
+            # 2) Alternate: entry.changes[].value.*
+            for change in (entry_obj.get('changes') or []) if isinstance(entry_obj.get('changes'), list) else []:
+                value = change.get('value') or {}
 
-                # Mid can be present as 'mid' (common) or sometimes as 'id'
-                message_id = message.get('mid') or message.get('id')
-                message_text = message.get('text') or ''
+                # 2a) value.messaging[]
+                if isinstance(value.get('messaging'), list):
+                    for ev in value.get('messaging') or []:
+                        sender_id = (ev.get('sender') or {}).get('id')
+                        timestamp = ev.get('timestamp')
+                        message = ev.get('message')
+                        if isinstance(message, dict):
+                            message_id = message.get('mid') or message.get('id')
+                            message_text = message.get('text') or ''
+                            _add(sender_id, message_text, timestamp=timestamp, message_id=message_id)
 
-                # Ignore non-text messages for now (attachments, reactions, etc.)
-                if not (message_text and sender_id):
-                    continue
+                # 2b) Some integrations deliver a single message-like object in value
+                # Try common fields: value.from.id + value.message/text
+                sender_id = None
+                from_obj = value.get('from')
+                if isinstance(from_obj, dict):
+                    sender_id = from_obj.get('id')
+                message_text = value.get('message') or value.get('text')
+                if sender_id and isinstance(message_text, str) and message_text.strip():
+                    _add(sender_id, message_text.strip(), timestamp=value.get('timestamp') or value.get('time'), message_id=value.get('id'))
 
-                result = process_instagram_message(
-                    sender_id,
-                    message_id,
-                    message_text,
-                    timestamp
-                )
-                results.append(result)
+            return extracted
+
+        for entry in event_data.get('entry', []) or []:
+            for ev in _extract_text_events(entry):
+                try:
+                    result = process_instagram_message(
+                        ev['sender_id'],
+                        ev.get('message_id'),
+                        ev.get('message_text') or '',
+                        ev.get('timestamp'),
+                    )
+                    results.append(result)
+                except Exception as e:
+                    current_app.logger.error(f'Error processing extracted event: {e}')
 
         if not results:
             current_app.logger.info('No processable messaging events found in webhook payload')
