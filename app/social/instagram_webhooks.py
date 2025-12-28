@@ -130,12 +130,24 @@ def send_instagram_message(recipient_id, message_text):
         else:
             error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
             error_msg = error_data.get('error', {}).get('message', response.text)
+            error_code = error_data.get('error', {}).get('code')
+            
+            # Special handling for permission error
+            if error_code == 3 or 'does not have the capability' in error_msg:
+                error_msg = (
+                    'Instagram messaging permission not granted. '
+                    'Your app needs "instagram_manage_messages" permission from Meta. '
+                    'Submit your app for review at: https://developers.facebook.com/apps/'
+                )
+            
+            current_app.logger.error(f'Instagram send failed: {error_msg}')
             return {
                 'success': False,
                 'message_id': None,
                 'error': f'Instagram API error: {error_msg}'
             }
     except Exception as e:
+        current_app.logger.error(f'Instagram send exception: {e}')
         return {
             'success': False,
             'message_id': None,

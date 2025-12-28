@@ -3,160 +3,175 @@
 {% block title %}Chat Control Settings{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 20px;">
-  <h1 style="margin-bottom: 10px;">⚙️ Chat Control Settings</h1>
-  <p style="color: #666;">Configure auto-reply automation, rate limits, and restrictions</p>
-</div>
+<div style="display: flex; flex-direction: column; height: calc(100vh - 140px); overflow: hidden;">
+  <!-- Fixed Header -->
+  <div style="flex-shrink: 0; margin-bottom: 12px;">
+    <h1 style="margin: 0 0 4px 0; font-size: 1.6rem;">⚙️ Chat Control Settings</h1>
+    <p style="color: #666; font-size: 0.9rem; margin: 0;">Configure auto-reply automation, rate limits, and restrictions</p>
+  </div>
 
-<!-- Statistics Dashboard -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-  <div class="card" style="text-align: center;">
-    <div style="font-size: 32px; font-weight: bold; color: #0a66c2;">{{ stats.total_conversations }}</div>
-    <div style="color: #666; margin-top: 5px;">Total Conversations</div>
-  </div>
-  <div class="card" style="text-align: center;">
-    <div style="font-size: 32px; font-weight: bold; color: #28a745;">{{ stats.active_conversations }}</div>
-    <div style="color: #666; margin-top: 5px;">Active</div>
-  </div>
-  <div class="card" style="text-align: center;">
-    <div style="font-size: 32px; font-weight: bold; color: #f59e0b;">{{ stats.auto_replies_24h }}</div>
-    <div style="color: #666; margin-top: 5px;">Replies (24h)</div>
-  </div>
-  <div class="card" style="text-align: center;">
-    <div style="font-size: 32px; font-weight: bold; color: {% if stats.remaining_1h > 0 %}#28a745{% else %}#dc3545{% endif %};">
-      {{ stats.auto_replies_1h }}/{{ stats.rate_limit_1h }}
+  <!-- Instagram API Permission Notice -->
+  <div style="background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; display: flex; gap: 10px; flex-shrink: 0;">
+    <div style="font-size: 20px; flex-shrink: 0;">⚠️</div>
+    <div style="font-size: 0.85rem;">
+      <strong style="color: #856404;">Instagram Messaging Permission Required</strong> — 
+      <span style="color: #856404;">Your app can receive DMs but not send. Request <strong>instagram_manage_messages</strong> at <a href="https://developers.facebook.com/apps/" target="_blank" style="color: #0a66c2;">Meta for Developers</a> → App Review.</span>
     </div>
-    <div style="color: #666; margin-top: 5px;">Usage (1h)</div>
   </div>
-</div>
 
-<!-- Quick Toggles -->
-<div class="card" style="margin-bottom: 25px;">
-  <h2 style="margin-bottom: 20px;">🎛️ Quick Controls</h2>
-  
-  <div style="display: grid; gap: 15px;">
-    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_reply') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.auto_reply_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
-      <div>
-        <h3 style="margin: 0 0 5px 0;">🤖 Auto-Reply to DMs</h3>
-        <p style="margin: 0; color: #666; font-size: 14px;">Automatically respond to Instagram direct messages using AI</p>
+  <!-- Statistics Dashboard -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; flex-shrink: 0;">
+    <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #0a66c2;">{{ stats.total_conversations }}</div>
+      <div style="color: #666; margin-top: 2px; font-size: 0.8rem;">Total Conversations</div>
+    </div>
+    <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #28a745;">{{ stats.active_conversations }}</div>
+      <div style="color: #666; margin-top: 2px; font-size: 0.8rem;">Active</div>
+    </div>
+    <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">{{ stats.auto_replies_24h }}</div>
+      <div style="color: #666; margin-top: 2px; font-size: 0.8rem;">Replies (24h)</div>
+    </div>
+    <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e9ecef; text-align: center;">
+      <div style="font-size: 24px; font-weight: bold; color: {% if stats.remaining_1h > 0 %}#28a745{% else %}#dc3545{% endif %};">
+        {{ stats.auto_replies_1h }}/{{ stats.rate_limit_1h }}
       </div>
-      <button type="submit" class="btn" style="background: {% if settings.auto_reply_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
-        {% if settings.auto_reply_enabled %}✓ ON{% else %}✗ OFF{% endif %}
-      </button>
-    </form>
-
-    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_comment') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.auto_comment_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
-      <div>
-        <h3 style="margin: 0 0 5px 0;">💬 Auto-Comment on Posts</h3>
-        <p style="margin: 0; color: #666; font-size: 14px;">Automatically respond to comments on posts (Coming Soon)</p>
-      </div>
-      <button type="submit" class="btn" style="background: {% if settings.auto_comment_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
-        {% if settings.auto_comment_enabled %}✓ ON{% else %}✗ OFF{% endif %}
-      </button>
-    </form>
-
-    <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='business_hours') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: {% if settings.business_hours_only %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 8px;">
-      <div>
-        <h3 style="margin: 0 0 5px 0;">🕐 Business Hours Only</h3>
-        <p style="margin: 0; color: #666; font-size: 14px;">Restrict auto-replies to business hours ({{ settings.business_hours_start }} - {{ settings.business_hours_end }})</p>
-      </div>
-      <button type="submit" class="btn" style="background: {% if settings.business_hours_only %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 100px;">
-        {% if settings.business_hours_only %}✓ ON{% else %}✗ OFF{% endif %}
-      </button>
-    </form>
+      <div style="color: #666; margin-top: 2px; font-size: 0.8rem;">Usage (1h)</div>
+    </div>
   </div>
-</div>
 
-<!-- Detailed Settings Form -->
-<div class="card">
-  <h2 style="margin-bottom: 20px;">📋 Detailed Settings</h2>
-  
-  <form method="POST" action="{{ url_for('settings.update_settings') }}">
-    
-    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <h3 style="margin-bottom: 15px;">⏱️ Rate Limits</h3>
+  <!-- Scrollable Content Area -->
+  <div style="flex: 1; overflow-y: auto; padding-right: 8px;">
+    <!-- Quick Toggles -->
+    <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e9ecef; margin-bottom: 12px;">
+      <h2 style="margin: 0 0 12px 0; font-size: 1.1rem;">🎛️ Quick Controls</h2>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div>
-          <label style="display: block; margin-bottom: 8px; font-weight: 500;">DM Reply Rate Limit (per hour)</label>
-          <input type="number" name="reply_rate_limit" value="{{ settings.reply_rate_limit }}" min="1" max="100"
-                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
-          <small style="color: #666;">Maximum auto-replies per hour</small>
-        </div>
+      <div style="display: grid; gap: 10px;">
+        <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_reply') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: {% if settings.auto_reply_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 6px;">
+          <div>
+            <h3 style="margin: 0 0 2px 0; font-size: 0.95rem;">🤖 Auto-Reply to DMs</h3>
+            <p style="margin: 0; color: #666; font-size: 0.8rem;">Automatically respond to Instagram direct messages using AI</p>
+          </div>
+          <button type="submit" class="btn" style="background: {% if settings.auto_reply_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 80px; padding: 0.5rem 1rem;">
+            {% if settings.auto_reply_enabled %}✓ ON{% else %}✗ OFF{% endif %}
+          </button>
+        </form>
+
+        <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='auto_comment') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: {% if settings.auto_comment_enabled %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 6px;">
+          <div>
+            <h3 style="margin: 0 0 2px 0; font-size: 0.95rem;">💬 Auto-Comment on Posts</h3>
+            <p style="margin: 0; color: #666; font-size: 0.8rem;">Automatically respond to comments on posts (Coming Soon)</p>
+          </div>
+          <button type="submit" class="btn" style="background: {% if settings.auto_comment_enabled %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 80px; padding: 0.5rem 1rem;">
+            {% if settings.auto_comment_enabled %}✓ ON{% else %}✗ OFF{% endif %}
+          </button>
+        </form>
+
+        <form method="POST" action="{{ url_for('settings.toggle_setting', setting_name='business_hours') }}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: {% if settings.business_hours_only %}#d4edda{% else %}#f8d7da{% endif %}; border-radius: 6px;">
+          <div>
+            <h3 style="margin: 0 0 2px 0; font-size: 0.95rem;">🕐 Business Hours Only</h3>
+            <p style="margin: 0; color: #666; font-size: 0.8rem;">Restrict auto-replies to business hours ({{ settings.business_hours_start }} - {{ settings.business_hours_end }})</p>
+          </div>
+          <button type="submit" class="btn" style="background: {% if settings.business_hours_only %}#28a745{% else %}#6c757d{% endif %}; color: #fff; min-width: 80px; padding: 0.5rem 1rem;">
+            {% if settings.business_hours_only %}✓ ON{% else %}✗ OFF{% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Detailed Settings Form -->
+    <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e9ecef; margin-bottom: 12px;">
+      <h2 style="margin: 0 0 12px 0; font-size: 1.1rem;">📋 Detailed Settings</h2>
+      
+      <form method="POST" action="{{ url_for('settings.update_settings') }}">
         
-        <div>
-          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Comment Rate Limit (per hour)</label>
-          <input type="number" name="comment_rate_limit" value="{{ settings.comment_rate_limit }}" min="1" max="100"
-                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
-          <small style="color: #666;">Maximum auto-comments per hour</small>
+        <div style="border: 1.5px solid #e9ecef; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1rem;">⏱️ Rate Limits</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">DM Reply Rate Limit (per hour)</label>
+              <input type="number" name="reply_rate_limit" value="{{ settings.reply_rate_limit }}" min="1" max="100"
+                     style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-size: 0.9rem;">
+              <small style="color: #666; font-size: 0.75rem;">Maximum auto-replies per hour</small>
+            </div>
+            
+            <div>
+              <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">Comment Rate Limit (per hour)</label>
+              <input type="number" name="comment_rate_limit" value="{{ settings.comment_rate_limit }}" min="1" max="100"
+                     style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-size: 0.9rem;">
+              <small style="color: #666; font-size: 0.75rem;">Maximum auto-comments per hour</small>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <h3 style="margin-bottom: 15px;">🕐 Business Hours</h3>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div>
-          <label style="display: block; margin-bottom: 8px; font-weight: 500;">Start Time</label>
-          <input type="time" name="business_hours_start" value="{{ settings.business_hours_start }}"
-                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+        <div style="border: 1.5px solid #e9ecef; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1rem;">🕐 Business Hours</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">Start Time</label>
+              <input type="time" name="business_hours_start" value="{{ settings.business_hours_start }}"
+                     style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-size: 0.9rem;">
+            </div>
+            
+            <div>
+              <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">End Time</label>
+              <input type="time" name="business_hours_end" value="{{ settings.business_hours_end }}"
+                     style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-size: 0.9rem;">
+            </div>
+          </div>
         </div>
-        
-        <div>
-          <label style="display: block; margin-bottom: 8px; font-weight: 500;">End Time</label>
-          <input type="time" name="business_hours_end" value="{{ settings.business_hours_end }}"
-                 style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px;">
+
+        <div style="border: 1.5px solid #e9ecef; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1rem;">💬 Default Messages</h3>
+          
+          <div style="margin-bottom: 12px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">Default Greeting</label>
+            <textarea name="default_greeting" rows="2"
+                      style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-family: inherit; font-size: 0.9rem;">{{ settings.default_greeting }}</textarea>
+            <small style="color: #666; font-size: 0.75rem;">Initial message for new conversations</small>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 4px; font-weight: 500; font-size: 0.85rem;">Fallback Message</label>
+            <textarea name="fallback_message" rows="2"
+                      style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; font-family: inherit; font-size: 0.9rem;">{{ settings.fallback_message }}</textarea>
+            <small style="color: #666; font-size: 0.75rem;">Message when AI fails to generate a response</small>
+          </div>
         </div>
-      </div>
+
+        <div style="border: 1.5px solid #e9ecef; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1rem;">🚫 Blacklist Keywords</h3>
+          
+          <input type="text" name="blacklist_keywords" value="{{ blacklist|join(', ') }}"
+                 placeholder="E.g., spam, advertisement, promo"
+                 style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; margin-bottom: 4px; font-size: 0.9rem;">
+          <small style="color: #666; font-size: 0.75rem;">Comma-separated keywords. Messages containing these will not get auto-replies</small>
+        </div>
+
+        <div style="border: 1.5px solid #e9ecef; border-radius: 6px; padding: 12px; margin-bottom: 12px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 1rem;">⭐ Whitelist Users</h3>
+          
+          <input type="text" name="whitelist_users" value="{{ whitelist|join(', ') }}"
+                 placeholder="E.g., @vipuser, @partner"
+                 style="width: 100%; padding: 8px; border: 1.5px solid #e9ecef; border-radius: 4px; margin-bottom: 4px; font-size: 0.9rem;">
+          <small style="color: #666; font-size: 0.75rem;">Comma-separated usernames for priority handling (future feature)</small>
+        </div>
+
+        <button type="submit" class="btn" style="background: #0a66c2; color: #fff; width: 100%; padding: 0.65rem;">
+          💾 Save All Settings
+        </button>
+      </form>
     </div>
 
-    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <h3 style="margin-bottom: 15px;">💬 Default Messages</h3>
-      
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Default Greeting</label>
-        <textarea name="default_greeting" rows="3"
-                  style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; font-family: inherit;">{{ settings.default_greeting }}</textarea>
-        <small style="color: #666;">Initial message for new conversations</small>
-      </div>
-      
-      <div>
-        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Fallback Message</label>
-        <textarea name="fallback_message" rows="3"
-                  style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; font-family: inherit;">{{ settings.fallback_message }}</textarea>
-        <small style="color: #666;">Message when AI fails to generate a response</small>
-      </div>
+    <div style="text-align: center; margin-bottom: 12px;">
+      <a href="{{ url_for('settings.conversations') }}" class="btn secondary" style="padding: 0.65rem 1.2rem;">
+        💬 View DM Conversations
+      </a>
     </div>
-
-    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-      <h3 style="margin-bottom: 15px;">🚫 Blacklist Keywords</h3>
-      
-      <input type="text" name="blacklist_keywords" value="{{ blacklist|join(', ') }}"
-             placeholder="E.g., spam, advertisement, promo"
-             style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; margin-bottom: 8px;">
-      <small style="color: #666;">Comma-separated keywords. Messages containing these will not get auto-replies</small>
-    </div>
-
-    <div style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
-      <h3 style="margin-bottom: 15px;">⭐ Whitelist Users</h3>
-      
-      <input type="text" name="whitelist_users" value="{{ whitelist|join(', ') }}"
-             placeholder="E.g., @vipuser, @partner"
-             style="width: 100%; padding: 10px; border: 1.5px solid #e9ecef; border-radius: 6px; margin-bottom: 8px;">
-      <small style="color: #666;">Comma-separated usernames for priority handling (future feature)</small>
-    </div>
-
-    <button type="submit" class="btn" style="background: #0a66c2; color: #fff; width: 100%;">
-      💾 Save All Settings
-    </button>
-  </form>
-</div>
-
-<div style="margin-top: 20px; text-align: center;">
-  <a href="{{ url_for('settings.conversations') }}" class="btn secondary">
-    💬 View DM Conversations
-  </a>
+  </div>
 </div>
 {% endblock %}
 
