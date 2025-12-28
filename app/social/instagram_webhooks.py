@@ -209,7 +209,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
     """
     from .. import db
     from ..models import DMConversation, DMMessage
-    from ..ai.gemini_service import generate_reply, should_auto_reply, generate_fallback_response
+    from ..ai.rag_chat import generate_dm_response
     
     current_app.logger.info(f'Processing message from {sender_id}: {message_text[:50]}...')
     
@@ -263,8 +263,10 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         
         db.session.commit()
         
-        # Check if we should auto-reply.
-        # IMPORTANT: Reply generation/sending can be slow; we do it asynchronously so webhook responses stay fast.
+        # Check if we should auto-reply using ChatSettings
+        from ..models import ChatSettings
+        from ..ai.gemini_service import should_auto_reply
+        
         should_reply, reason = should_auto_reply(message_text, conversation)
         if not should_reply:
             current_app.logger.info(f'Not replying: {reason}')
@@ -288,12 +290,18 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
                         app_obj.logger.warning('Async reply: conversation missing')
                         return
 
-                    reply_result = generate_reply(conv, message_text)
-                    if not reply_result.get('success'):
-                        app_obj.logger.error(f"Gemini error: {reply_result.get('error')}")
+                    # Use new RAG system for response generation
+                    try:
+                        reply_text = generate_dm_response(
+                            message=message_text,
+                            conversation_id=str(sender_id)
+                        )
+                        app_obj.logger.info(f"RAG response generated: {reply_text[:50]}...")
+                    except Exception as rag_error:
+                        app_obj.logger.error(f"RAG generation error: {rag_error}")
+                        # Fallback to simple greeting
+                        from ..ai.gemini_service import generate_fallback_response
                         reply_text = generate_fallback_response()
-                    else:
-                        reply_text = reply_result.get('reply')
 
                     send_result = send_instagram_message(sender_id, reply_text)
 
@@ -303,8 +311,8 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
                         sender_type='bot',
                         message_text=reply_text,
                         is_auto_reply=True,
-                        gemini_prompt_used=reply_result.get('prompt'),
-                        gemini_response_time=reply_result.get('response_time'),
+                        gemini_prompt_used=None,  # RAG system doesn't expose prompts
+                        gemini_response_time=None,  # RAG handles timing internally
                         sent_successfully=send_result.get('success', False),
                         error_message=send_result.get('error'),
                     )

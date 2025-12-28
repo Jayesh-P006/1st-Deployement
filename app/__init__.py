@@ -151,7 +151,7 @@ def create_app():
     from .auth import auth_bp
     from .collab_routes import collab_bp
     from .admin_routes import admin_bp
-    from .training_routes import training_bp
+    from .rag_routes import rag_bp
     from .settings_routes import settings_bp
     from .webhook_routes import webhook_bp
     from .dm_routes import dm_bp
@@ -160,7 +160,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(collab_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(training_bp)
+    app.register_blueprint(rag_bp)  # RAG system status pages
     app.register_blueprint(settings_bp)
     app.register_blueprint(webhook_bp)
     app.register_blueprint(dm_bp)

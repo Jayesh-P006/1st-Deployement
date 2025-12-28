@@ -221,27 +221,6 @@ class ChatSettings(db.Model):
     def __repr__(self):
         return f'<ChatSettings auto_reply={self.auto_reply_enabled} auto_comment={self.auto_comment_enabled}>'
 
-class TrainingData(db.Model):
-    """Store information for training AI responses (events, community info, FAQs)"""
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(50), nullable=False)  # 'event', 'community', 'faq', 'product', 'other'
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    tags = db.Column(db.Text)  # JSON array of searchable tags
-    priority = db.Column(db.Integer, default=5)  # 1-10, higher = more important
-    is_active = db.Column(db.Boolean, default=True)
-    event_date = db.Column(db.DateTime)  # For events
-    location = db.Column(db.String(200))  # For events
-    contact_info = db.Column(db.Text)  # Additional contact details
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    creator = db.relationship('User', backref='training_data', lazy='joined')
-    
-    def __repr__(self):
-        return f'<TrainingData {self.category}: {self.title}>'
-
 class DMConversation(db.Model):
     """Track DM conversations with users"""
     id = db.Column(db.Integer, primary_key=True)

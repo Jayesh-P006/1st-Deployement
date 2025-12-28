@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}RAG System Status{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-robot"></i> RAG System Status
+        </h2>
+        <div>
+            {% if system_operational %}
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-check-circle"></i> System Operational
+                </span>
+            {% else %}
+                <span class="badge bg-danger fs-6">
+                    <i class="bi bi-exclamation-triangle"></i> System Not Ready
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- System Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center {% if system_config.groq_configured %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-body">
+                    <i class="bi bi-lightning-charge fs-1 {% if system_config.groq_configured %}text-success{% else %}text-danger{% endif %}"></i>
+                    <h5 class="card-title mt-2">Groq API</h5>
+                    <p class="card-text">
+                        {% if system_config.groq_configured %}
+                            <span class="badge bg-success">Connected</span>
+                        {% else %}
+                            <span class="badge bg-danger">Not Configured</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center {% if system_config.pinecone_configured %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-body">
+                    <i class="bi bi-database fs-1 {% if system_config.pinecone_configured %}text-success{% else %}text-danger{% endif %}"></i>
+                    <h5 class="card-title mt-2">Pinecone</h5>
+                    <p class="card-text">
+                        {% if pinecone_stats.connected %}
+                            <span class="badge bg-success">Connected</span>
+                        {% else %}
+                            <span class="badge bg-danger">Disconnected</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center {% if system_config.gemini_configured %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-body">
+                    <i class="bi bi-eye fs-1 {% if system_config.gemini_configured %}text-success{% else %}text-danger{% endif %}"></i>
+                    <h5 class="card-title mt-2">Gemini Vision</h5>
+                    <p class="card-text">
+                        {% if system_config.gemini_configured %}
+                            <span class="badge bg-success">Configured</span>
+                        {% else %}
+                            <span class="badge bg-danger">Not Configured</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="bi bi-shield-check fs-1 text-info"></i>
+                    <h5 class="card-title mt-2">Gatekeeper</h5>
+                    <p class="card-text">
+                        {% if gatekeeper_stats.enabled %}
+                            <span class="badge bg-info">Active</span>
+                            <br><small class="text-muted">{{ gatekeeper_stats.estimated_efficiency }} efficiency</small>
+                        {% else %}
+                            <span class="badge bg-secondary">Disabled</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pinecone Statistics -->
+    {% if pinecone_stats.connected %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-database"></i> Vector Database Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <h3 class="text-primary">{{ pinecone_stats.total_vectors }}</h3>
+                        <p class="text-muted mb-0">Total Vectors Stored</p>
+                        <small class="text-muted">Posts ingested into RAG system</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <h3 class="text-info">{{ pinecone_stats.dimension }}</h3>
+                        <p class="text-muted mb-0">Vector Dimension</p>
+                        <small class="text-muted">Embedding size (Gemini text-embedding-004)</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <h3 class="text-success">{{ pinecone_stats.index_name }}</h3>
+                        <p class="text-muted mb-0">Index Name</p>
+                        <small class="text-muted">Pinecone database index</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- System Configuration -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-gear"></i> System Configuration</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <td><strong>Retrieval (k)</strong></td>
+                        <td>{{ system_config.retrieval_k }} most relevant document</td>
+                        <td><span class="badge bg-success">Token Optimized</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Max Context Tokens</strong></td>
+                        <td>{{ system_config.max_context_tokens }} tokens</td>
+                        <td><span class="badge bg-info">Memory Limited</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rate Limit Delay</strong></td>
+                        <td>{{ system_config.rate_limit_delay }} seconds</td>
+                        <td><span class="badge bg-warning">Free Tier Compliant</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gatekeeper Patterns</strong></td>
+                        <td>{{ gatekeeper_stats.pattern_count }} greeting patterns</td>
+                        <td><span class="badge bg-primary">0-Token Responses</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Rate Limiter Status -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Rate Limiter Status</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Status:</strong> 
+                {% if rate_limiter_stats.enabled %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Disabled</span>
+                {% endif %}
+            </p>
+            <p><strong>Delay Between Calls:</strong> {{ rate_limiter_stats.delay }} seconds (max 30 requests/min)</p>
+            <p><strong>Last API Call:</strong> {{ rate_limiter_stats.last_call }}</p>
+        </div>
+    </div>
+
+    <!-- Test System -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-chat-dots"></i> Test RAG System</h5>
+        </div>
+        <div class="card-body">
+            <form id="testForm">
+                <div class="mb-3">
+                    <label for="testQuery" class="form-label">Enter a test query:</label>
+                    <input type="text" class="form-control" id="testQuery" name="query" 
+                           placeholder="e.g., When is the next event?" required>
+                    <small class="text-muted">Try: "Hi there!" (gatekeeper) or "Tell me about recent events" (RAG)</small>
+                </div>
+                <button type="submit" class="btn btn-success" id="testBtn">
+                    <i class="bi bi-send"></i> Test Query
+                </button>
+            </form>
+            
+            <div id="testResult" class="mt-3" style="display: none;">
+                <div class="alert alert-info">
+                    <h6><strong>Query:</strong> <span id="resultQuery"></span></h6>
+                    <hr>
+                    <h6><strong>Response:</strong></h6>
+                    <p id="resultResponse" class="mb-2"></p>
+                    <small class="text-muted">Response time: <span id="resultDuration"></span>ms</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-tools"></i> Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <button class="btn btn-warning" onclick="clearMemory()">
+                <i class="bi bi-trash"></i> Clear Conversation Memory
+            </button>
+            <a href="{{ url_for('rag.stats') }}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-graph-up"></i> View Detailed Stats (JSON)
+            </a>
+        </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    {% if not system_operational %}
+    <div class="alert alert-warning">
+        <h5><i class="bi bi-exclamation-triangle"></i> System Not Ready</h5>
+        <p>To activate the RAG system, please configure the following in your <code>.env</code> file:</p>
+        <ul>
+            {% if not system_config.groq_configured %}
+            <li><code>GROQ_API_KEY</code> - Get from <a href="https://console.groq.com/" target="_blank">console.groq.com</a></li>
+            {% endif %}
+            {% if not system_config.pinecone_configured %}
+            <li><code>PINECONE_API_KEY</code> - Get from <a href="https://www.pinecone.io/" target="_blank">pinecone.io</a></li>
+            {% endif %}
+            {% if not system_config.gemini_configured %}
+            <li><code>GEMINI_API_KEY</code> - Get from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+            {% endif %}
+        </ul>
+        <p class="mb-0">See <code>RAG_SETUP_GUIDE.md</code> for detailed setup instructions.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.stat-box {
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.stat-box h3 {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+</style>
+
+<script>
+document.getElementById('testForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('testBtn');
+    const resultDiv = document.getElementById('testResult');
+    const query = document.getElementById('testQuery').value;
+    
+    // Disable button
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Testing...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('query', query);
+        
+        const response = await fetch('{{ url_for("rag.test_system") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('resultQuery').textContent = data.query;
+            document.getElementById('resultResponse').textContent = data.response;
+            document.getElementById('resultDuration').textContent = data.duration_ms;
+            resultDiv.style.display = 'block';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> Test Query';
+    }
+});
+
+async function clearMemory() {
+    if (!confirm('Clear conversation memory? This will reset all chat histories.')) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('conversation_id', 'test_user');
+        
+        const response = await fetch('{{ url_for("rag.clear_memory") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
