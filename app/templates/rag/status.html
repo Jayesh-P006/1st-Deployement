@@ -219,11 +219,63 @@
         </div>
     </div>
 
+    <!-- API Keys Debug Info -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-key"></i> API Keys Status</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <td><strong>Groq API Key:</strong></td>
+                        <td><code>{{ system_config.groq_key_preview }}</code></td>
+                        <td>
+                            {% if system_config.groq_configured %}
+                                <span class="badge bg-success">✓ Configured</span>
+                            {% else %}
+                                <span class="badge bg-danger">✗ Missing</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pinecone API Key:</strong></td>
+                        <td><code>{{ system_config.pinecone_key_preview }}</code></td>
+                        <td>
+                            {% if system_config.pinecone_configured %}
+                                <span class="badge bg-success">✓ Configured</span>
+                            {% else %}
+                                <span class="badge bg-danger">✗ Missing</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pinecone Connection:</strong></td>
+                        <td>
+                            {% if pinecone_stats.connected %}
+                                <span class="text-success">Connected to {{ pinecone_stats.index_name }}</span>
+                            {% else %}
+                                <span class="text-danger">{{ pinecone_stats.error if pinecone_stats.error else 'Disconnected' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pinecone_stats.connected %}
+                                <span class="badge bg-success">✓ Online</span>
+                            {% else %}
+                                <span class="badge bg-danger">✗ Offline</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Setup Instructions -->
     {% if not system_operational %}
     <div class="alert alert-warning">
         <h5><i class="bi bi-exclamation-triangle"></i> System Not Ready</h5>
-        <p>To activate the RAG system, please configure the following in your <code>.env</code> file:</p>
+        <p>To activate the RAG system, please configure the following in Railway <strong>Environment Variables</strong>:</p>
         <ul>
             {% if not system_config.groq_configured %}
             <li><code>GROQ_API_KEY</code> - Get from <a href="https://console.groq.com/" target="_blank">console.groq.com</a></li>
@@ -234,8 +286,11 @@
             {% if not system_config.gemini_configured %}
             <li><code>GEMINI_API_KEY</code> - Get from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
             {% endif %}
+            {% if system_config.groq_configured and system_config.pinecone_configured and not pinecone_stats.connected %}
+            <li>Create Pinecone index: <code>social-media-posts</code> with dimension <code>768</code> in <code>us-east-1</code></li>
+            {% endif %}
         </ul>
-        <p class="mb-0">See <code>RAG_SETUP_GUIDE.md</code> for detailed setup instructions.</p>
+        <p class="mb-0"><strong>Note:</strong> After adding variables in Railway, the app will automatically redeploy (~2 minutes).</p>
     </div>
     {% endif %}
 </div>

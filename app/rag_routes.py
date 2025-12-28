@@ -56,12 +56,14 @@ def status():
         # System configuration
         from config import Config
         system_config = {
-            'groq_configured': bool(Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'your_groq_api_key_here'),
-            'pinecone_configured': bool(Config.PINECONE_API_KEY and Config.PINECONE_API_KEY != 'your_pinecone_api_key_here'),
-            'gemini_configured': bool(Config.GEMINI_API_KEY),
+            'groq_configured': bool(Config.GROQ_API_KEY and Config.GROQ_API_KEY.strip() and Config.GROQ_API_KEY != 'your_groq_api_key_here'),
+            'pinecone_configured': bool(Config.PINECONE_API_KEY and Config.PINECONE_API_KEY.strip() and Config.PINECONE_API_KEY != 'your_pinecone_api_key_here'),
+            'gemini_configured': bool(Config.GEMINI_API_KEY and Config.GEMINI_API_KEY.strip()),
             'retrieval_k': Config.RAG_RETRIEVAL_K,
             'max_context_tokens': Config.RAG_MAX_CONTEXT_TOKENS,
             'rate_limit_delay': Config.RAG_RATE_LIMIT_DELAY,
+            'groq_key_preview': f"{Config.GROQ_API_KEY[:10]}..." if Config.GROQ_API_KEY and len(Config.GROQ_API_KEY) > 10 else "NOT SET",
+            'pinecone_key_preview': f"{Config.PINECONE_API_KEY[:10]}..." if Config.PINECONE_API_KEY and len(Config.PINECONE_API_KEY) > 10 else "NOT SET",
         }
         
         # Check if system is fully operational
