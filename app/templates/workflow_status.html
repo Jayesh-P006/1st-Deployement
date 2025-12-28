@@ -184,14 +184,19 @@ async function fetchStatus() {
                                status.status === 'warning' ? 'warning' : 'danger';
             const statusColor = status.status === 'operational' ? '#10b981' : 
                                status.status === 'warning' ? '#f59e0b' : '#ef4444';
+            const statusText = status.status === 'operational' ? 'Operational' : 
+                              status.status === 'warning' ? 'Warning' : 'Down';
             
             html += `
                 <div class="col-md-4 mb-3">
                     <div class="card border-${statusClass}">
                         <div class="card-body">
-                            <h6>${node.icon} ${node.name}</h6>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h6 class="mb-0">${node.icon} ${node.name}</h6>
+                                <span style="font-size: 24px; color: ${statusColor};">●</span>
+                            </div>
                             <p class="mb-1">
-                                <span class="badge bg-${statusClass}">${status.status.toUpperCase()}</span>
+                                <strong style="color: ${statusColor};">${statusText}</strong>
                             </p>
                             <small class="text-muted">${status.details}</small><br>
                             <small class="text-muted">Latency: ${status.latency}</small>
