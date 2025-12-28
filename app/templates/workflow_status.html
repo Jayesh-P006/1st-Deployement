@@ -12,7 +12,7 @@
                 </svg>
                 Workflow Status Monitor
             </h2>
-            <p class="text-muted mb-0">Real-time system pipeline monitoring (Auto-refreshes every 60s)</p>
+            <p class="text-muted mb-0">Real-time system pipeline monitoring</p>
         </div>
         <div>
             <button id="refresh-btn" class="btn btn-primary" onclick="manualRefresh()">
@@ -223,8 +223,6 @@ async function fetchStatus() {
 // Initial load
 fetchStatus();
 
-// Auto-refresh every 60 seconds (1 minute)
-setInterval(fetchStatus, 60000);
 
 // Add manual refresh button functionality
 function manualRefresh() {
