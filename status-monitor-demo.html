@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status Monitor Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px currentColor; }
+      50% { box-shadow: 0 0 40px currentColor; }
+    }
+    .animate-pulse-glow {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
+  
+  <!-- Demo Page Content -->
+  <div class="container mx-auto p-8">
+    <h1 class="text-4xl font-bold text-white mb-4">
+      System Status Monitor - Demo
+    </h1>
+    <p class="text-white/60 mb-8">
+      A floating, glassmorphism-styled dashboard widget with animated pipeline visualization.
+    </p>
+
+    <div class="grid grid-cols-3 gap-6 mb-8">
+      <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+        <h3 class="text-white font-semibold mb-2">✨ Features</h3>
+        <ul class="text-white/60 text-sm space-y-1">
+          <li>• Draggable window</li>
+          <li>• Minimizable interface</li>
+          <li>• Real-time status</li>
+          <li>• Animated connections</li>
+        </ul>
+      </div>
+      <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+        <h3 class="text-white font-semibold mb-2">🎨 Design</h3>
+        <ul class="text-white/60 text-sm space-y-1">
+          <li>• Glassmorphism style</li>
+          <li>• Smooth animations</li>
+          <li>• Responsive layout</li>
+          <li>• Dark theme</li>
+        </ul>
+      </div>
+      <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+        <h3 class="text-white font-semibold mb-2">⚡ Performance</h3>
+        <ul class="text-white/60 text-sm space-y-1">
+          <li>• Lightweight</li>
+          <li>• GPU accelerated</li>
+          <li>• Low memory usage</li>
+          <li>• Smooth 60fps</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Status Monitor Widget -->
+  <div id="status-monitor" class="fixed z-50 select-none" style="right: 20px; bottom: 20px;">
+    <!-- Glassmorphism Container -->
+    <div class="backdrop-blur-xl bg-slate-900/40 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+      
+      <!-- Header Bar -->
+      <div class="drag-handle px-5 py-3 bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-b border-white/5 cursor-move flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2 h-2 rounded-full bg-red-500"></div>
+          <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+          <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span class="ml-2 text-white/90 font-semibold text-sm tracking-wide">
+            System Status Monitor
+          </span>
+        </div>
+        <button onclick="toggleMinimize()" class="text-white/60 hover:text-white/90 transition-colors">
+          <span id="minimize-icon">_</span>
+        </button>
+      </div>
+
+      <!-- Main Content -->
+      <div id="monitor-content" class="w-96 p-6">
+        
+        <!-- System Health Overview -->
+        <div class="mb-6 p-4 bg-white/5 rounded-xl border border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-white/70 text-sm">System Health</span>
+            <span class="font-bold text-lg text-emerald-400">Excellent</span>
+          </div>
+          <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500" style="width: 80%"></div>
+          </div>
+        </div>
+
+        <!-- Pipeline Nodes -->
+        <div class="space-y-4">
+          
+          <!-- Node 1: User Input -->
+          <div class="relative">
+            <svg class="absolute left-8 top-16 w-0.5 h-8" style="z-index: 0;">
+              <line x1="1" y1="0" x2="1" y2="32" stroke="#3b82f6" stroke-width="2">
+                <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite"/>
+              </line>
+            </svg>
+            <div class="relative z-10 p-4 rounded-xl border backdrop-blur-sm bg-emerald-500/10 border-white/10">
+              <div class="flex items-start gap-4">
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/50">
+                    👤
+                  </div>
+                  <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-white font-semibold text-sm">User Input</h3>
+                    <span class="text-xs text-white/50">12ms</span>
+                  </div>
+                  <p class="text-white/60 text-xs mb-1">Post creation interface</p>
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 bg-white/10">
+                    Operational
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 2: Vector Database -->
+          <div class="relative">
+            <svg class="absolute left-8 top-16 w-0.5 h-8" style="z-index: 0;">
+              <line x1="1" y1="0" x2="1" y2="32" stroke="#3b82f6" stroke-width="2"></line>
+            </svg>
+            <div class="relative z-10 p-4 rounded-xl border backdrop-blur-sm bg-emerald-500/10 border-white/10">
+              <div class="flex items-start gap-4">
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/50">
+                    🗄️
+                  </div>
+                  <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-white font-semibold text-sm">Vector Database</h3>
+                    <span class="text-xs text-white/50">45ms</span>
+                  </div>
+                  <p class="text-white/60 text-xs mb-1">Pinecone Dense Vectors</p>
+                  <p class="text-white/40 text-xs mb-2">1,247 vectors</p>
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 bg-white/10">
+                    Operational
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 3: AI Engine -->
+          <div class="relative">
+            <svg class="absolute left-8 top-16 w-0.5 h-8" style="z-index: 0;">
+              <line x1="1" y1="0" x2="1" y2="32" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5">
+                <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite"/>
+              </line>
+            </svg>
+            <div class="relative z-10 p-4 rounded-xl border backdrop-blur-sm bg-amber-400/10 border-white/10">
+              <div class="flex items-start gap-4">
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-2xl shadow-lg shadow-amber-400/50 animate-pulse">
+                    🧠
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-white font-semibold text-sm">AI Engine</h3>
+                    <span class="text-xs text-white/50">234ms</span>
+                  </div>
+                  <p class="text-white/60 text-xs mb-1">RAG + Groq/Gemini</p>
+                  <p class="text-white/40 text-xs mb-2">Processing 3 requests</p>
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-400 bg-white/10">
+                    Processing
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 4: Scheduler -->
+          <div class="relative">
+            <svg class="absolute left-8 top-16 w-0.5 h-8" style="z-index: 0;">
+              <line x1="1" y1="0" x2="1" y2="32" stroke="#3b82f6" stroke-width="2"></line>
+            </svg>
+            <div class="relative z-10 p-4 rounded-xl border backdrop-blur-sm bg-emerald-500/10 border-white/10">
+              <div class="flex items-start gap-4">
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/50">
+                    ⚙️
+                  </div>
+                  <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-white font-semibold text-sm">Scheduler Backend</h3>
+                    <span class="text-xs text-white/50">8ms</span>
+                  </div>
+                  <p class="text-white/60 text-xs mb-1">APScheduler</p>
+                  <p class="text-white/40 text-xs mb-2">12 jobs queued</p>
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 bg-white/10">
+                    Operational
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Node 5: Social APIs -->
+          <div class="relative">
+            <div class="relative z-10 p-4 rounded-xl border backdrop-blur-sm bg-emerald-500/10 border-white/10">
+              <div class="flex items-start gap-4">
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/50">
+                    📱
+                  </div>
+                  <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-white font-semibold text-sm">Social Media APIs</h3>
+                    <span class="text-xs text-white/50">156ms</span>
+                  </div>
+                  <p class="text-white/60 text-xs mb-1">Instagram Graph API</p>
+                  <p class="text-white/40 text-xs mb-2">Rate: 95/200</p>
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500 bg-white/10">
+                    Operational
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-white/60">Live Monitoring</span>
+          </div>
+          <span class="text-white/40" id="last-update">
+            Last update: --:--:--
+          </span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Draggable functionality
+    let isDragging = false;
+    let currentX, currentY, initialX, initialY;
+    const monitor = document.getElementById('status-monitor');
+    const dragHandle = monitor.querySelector('.drag-handle');
+
+    dragHandle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      initialX = e.clientX - monitor.offsetLeft;
+      initialY = e.clientY - monitor.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        monitor.style.left = currentX + 'px';
+        monitor.style.top = currentY + 'px';
+        monitor.style.right = 'auto';
+        monitor.style.bottom = 'auto';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Minimize functionality
+    function toggleMinimize() {
+      const content = document.getElementById('monitor-content');
+      const icon = document.getElementById('minimize-icon');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.textContent = '_';
+      } else {
+        content.style.display = 'none';
+        icon.textContent = '□';
+      }
+    }
+
+    // Update timestamp
+    function updateTimestamp() {
+      const now = new Date();
+      document.getElementById('last-update').textContent = 
+        `Last update: ${now.toLocaleTimeString()}`;
+    }
+    setInterval(updateTimestamp, 1000);
+    updateTimestamp();
+  </script>
+
+</body>
+</html>

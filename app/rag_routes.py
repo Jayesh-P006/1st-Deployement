@@ -42,7 +42,7 @@ def status():
         # Get gatekeeper stats
         gatekeeper_stats = {
             'enabled': True,
-            'pattern_count': len(chat_pipeline.gatekeeper.greeting_patterns),
+            'pattern_count': len(chat_pipeline.gatekeeper.GREETING_PATTERNS),
             'estimated_efficiency': '60-80%'
         }
         
