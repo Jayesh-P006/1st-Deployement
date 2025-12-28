@@ -155,6 +155,7 @@ def create_app():
     from .settings_routes import settings_bp
     from .webhook_routes import webhook_bp
     from .dm_routes import dm_bp
+    from .status_api import status_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
@@ -164,6 +165,7 @@ def create_app():
     app.register_blueprint(settings_bp)
     app.register_blueprint(webhook_bp)
     app.register_blueprint(dm_bp)
+    app.register_blueprint(status_bp)  # System status API
 
     # Expose helper to schedule new job
     @app.before_request
