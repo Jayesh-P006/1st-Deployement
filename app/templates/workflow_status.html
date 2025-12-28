@@ -271,14 +271,16 @@
                     const data = await response.json();
                     setSystemState(data);
                 } catch (error) {
-                    console.log('Using mock data');
+                    console.error('Error fetching system status:', error);
+                    // Don't update state on error to prevent re-renders
                 } finally {
                     setIsRefreshing(false);
                 }
             };
             
+            // Only fetch once on mount, no auto-refresh
             useEffect(() => {
-                fetchStatus();
+                // fetchStatus(); // Removed to prevent initial API call
             }, []);
             
             return <SystemStatusDashboard systemState={systemState} onRefresh={fetchStatus} isRefreshing={isRefreshing} />;

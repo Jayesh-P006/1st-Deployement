@@ -57,6 +57,9 @@
         <p>{{ selected_conversation.message_count }} messages · {{ selected_conversation.auto_reply_count }} auto-replies</p>
       </div>
       <div class="dm-header-badges">
+        <button id="refreshBtn" class="btn secondary" style="margin-right: 10px;">
+          <span id="refreshIcon">🔄</span> Refresh
+        </button>
         {% if selected_conversation.has_issues() %}
         <span class="dm-tag dm-tag-issue">Issue</span>
         {% endif %}
@@ -168,15 +171,22 @@ function createMessageBubble(msg) {
   return row;
 }
 
-async function pollMessages() {
-  if (!isPolling) return;
+async function refreshMessages(isManual = false) {
+  const refreshBtn = document.getElementById('refreshBtn');
+  const refreshIcon = document.getElementById('refreshIcon');
+  
+  if (isManual && refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshIcon.style.display = 'inline-block';
+    refreshIcon.style.animation = 'spin 1s linear infinite';
+  }
   
   try {
     const response = await fetch(`/dm/api/messages/${CONVERSATION_ID}`);
     const data = await response.json();
     
     if (data.success && data.messages.length > lastMessageCount) {
-      // New messages arrived
+      // New messages arrived - update chat container only
       const chatWindow = document.getElementById('chatWindow');
       const existingIds = new Set(
         Array.from(chatWindow.querySelectorAll('[data-message-id]'))
@@ -204,21 +214,33 @@ async function pollMessages() {
       }
     }
   } catch (error) {
-    console.error('Failed to poll messages:', error);
+    console.error('Failed to refresh messages:', error);
+  } finally {
+    if (isManual && refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshIcon.style.animation = '';
+    }
   }
 }
 
-// Poll every 3 seconds
-const pollInterval = setInterval(pollMessages, 3000);
+// Auto-refresh chat container only (every 3 seconds)
+setInterval(() => refreshMessages(false), 3000);
 
-// Stop polling when user leaves page
-window.addEventListener('beforeunload', () => {
-  isPolling = false;
-  clearInterval(pollInterval);
-});
+// Add CSS for spin animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
 
 // Scroll to bottom on load
 scrollToBottom();
+
+// Handle manual refresh button click
+document.getElementById('refreshBtn')?.addEventListener('click', () => refreshMessages(true));
 
 // Handle form submission with AJAX for smoother UX
 document.getElementById('replyForm').addEventListener('submit', async (e) => {
