@@ -12,7 +12,20 @@ status_bp = Blueprint('status', __name__)
 @login_required
 def workflow_status():
     """Workflow Status page with embedded monitoring widget"""
-    return render_template('workflow_status.html')
+    try:
+        return render_template('workflow_status.html')
+    except Exception as e:
+        # Fallback if template fails
+        return f"""
+        <html>
+        <head><title>Error</title></head>
+        <body>
+            <h1>Workflow Status - Error</h1>
+            <p>Failed to load workflow status page: {str(e)}</p>
+            <a href="/">Return to Dashboard</a>
+        </body>
+        </html>
+        """, 500
 
 @status_bp.route('/api/status/system', methods=['GET'])
 def get_system_status():
@@ -21,40 +34,45 @@ def get_system_status():
     This endpoint is called by the frontend status monitor.
     """
     try:
-        from .ai.rag_chat import get_chat_pipeline
-        from .ai.rag_ingest import get_ingestion_pipeline
         from config import Config
         
-        # Initialize pipelines
-        chat_pipeline = get_chat_pipeline()
-        ingest_pipeline = get_ingestion_pipeline()
+        # Check API configurations first (before initializing pipelines)
+        groq_configured = bool(Config.GROQ_API_KEY and Config.GROQ_API_KEY.strip() and Config.GROQ_API_KEY != 'your_groq_api_key_here')
+        pinecone_configured = bool(Config.PINECONE_API_KEY and Config.PINECONE_API_KEY.strip() and Config.PINECONE_API_KEY != 'your_pinecone_api_key_here')
+        gemini_configured = bool(Config.GEMINI_API_KEY and Config.GEMINI_API_KEY.strip())
         
-        # Check Pinecone connection
-        pinecone_status = 'operational'
-        pinecone_details = '0 vectors'
-        try:
-            index_stats = chat_pipeline.vector_store._index.describe_index_stats()
-            pinecone_details = f"{index_stats.get('total_vector_count', 0)} vectors"
-        except Exception as e:
-            pinecone_status = 'down'
-            pinecone_details = str(e)[:50]
+        # Check Pinecone connection only if configured
+        pinecone_status = 'down'
+        pinecone_details = 'Not configured'
         
-        # Check API configurations
-        groq_status = 'operational' if (Config.GROQ_API_KEY and Config.GROQ_API_KEY != 'your_groq_api_key_here') else 'down'
-        gemini_status = 'operational' if Config.GEMINI_API_KEY else 'down'
+        if pinecone_configured and gemini_configured:
+            try:
+                from .ai.rag_chat import get_chat_pipeline
+                chat_pipeline = get_chat_pipeline()
+                index_stats = chat_pipeline.vector_store._index.describe_index_stats()
+                pinecone_status = 'operational'
+                pinecone_details = f"{index_stats.get('total_vector_count', 0)} vectors"
+            except Exception as e:
+                pinecone_status = 'down'
+                pinecone_details = str(e)[:50]
+        
+        # Set API status
+        groq_status = 'operational' if groq_configured else 'down'
+        gemini_status = 'operational' if gemini_configured else 'down'
         
         # Database status (assume operational if we can query)
         from . import db
-        from .models import ScheduledPost
         db_status = 'operational'
         jobs_queued = 0
         try:
+            from .models import ScheduledPost
             jobs_queued = ScheduledPost.query.filter_by(status='scheduled').count()
-        except:
-            db_status = 'down'
+        except Exception as e:
+            db_status = 'warning'
+            jobs_queued = 0
         
         # Instagram API status
-        instagram_status = 'operational' if Config.INSTAGRAM_ACCESS_TOKEN else 'down'
+        instagram_status = 'operational' if (Config.INSTAGRAM_ACCESS_TOKEN and Config.INSTAGRAM_ACCESS_TOKEN.strip()) else 'down'
         
         # Return status for each system node
         return jsonify({
