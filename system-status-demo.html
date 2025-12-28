@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status Dashboard - Social Media Automation</title>
+    
+    <!-- Tailwind CSS CDN (for development - use build process in production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX transformation (development only) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Custom animations */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes ping-alert {
+            0% { transform: scale(1); opacity: 1; }
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @keyframes spin-warning {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .animate-pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .animate-ping-alert {
+            animation: ping-alert 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        .animate-spin-warning {
+            animation: spin-warning 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    
+    <!-- Main Application Container -->
+    <div id="root"></div>
+    
+    <!-- React Component (inline for demo - move to separate file in production) -->
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        // Advanced System Status Widget Component
+        const AdvancedSystemStatusWidget = ({ systemState = {} }) => {
+            const [isMinimized, setIsMinimized] = useState(false);
+            const [position, setPosition] = useState({ x: window.innerWidth - 900, y: 50 });
+            const [isDragging, setIsDragging] = useState(false);
+            const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+            const widgetRef = useRef(null);
+            
+            // Parse system state with defaults
+            const parseSystemState = () => {
+                return {
+                    instaGraphApi: systemState?.instaGraphApi || {
+                        status: 'operational',
+                        latency: '142ms',
+                        rateLimitRemaining: '87%'
+                    },
+                    webhooksConfig: systemState?.webhooksConfig || {
+                        status: 'operational',
+                        activeHooks: 3,
+                        lastEvent: '2m ago'
+                    },
+                    sqlDatabase: systemState?.sqlDatabase || {
+                        status: 'operational',
+                        activeConnections: 12,
+                        latency: '8ms'
+                    },
+                    groqCloud: systemState?.groqCloud || {
+                        status: 'operational',
+                        model: 'llama-3.1-70b',
+                        latency: '234ms'
+                    },
+                    pinecone: systemState?.pinecone || {
+                        status: 'operational',
+                        index: 'social-vectors',
+                        totalVectors: '12,847',
+                        latency: '45ms'
+                    },
+                    scheduler: systemState?.scheduler || {
+                        status: 'operational',
+                        jobsQueued: 7,
+                        nextRun: '15m'
+                    },
+                    automation: systemState?.automation || {
+                        status: 'degraded',
+                        lastTriggered: '5m ago',
+                        successRate: '94%'
+                    },
+                    geminiApi: systemState?.geminiApi || {
+                        status: 'operational',
+                        latency: '189ms',
+                        quotaUsedToday: '23%'
+                    },
+                    llumaAi: systemState?.llumaAi || {
+                        status: 'operational',
+                        latency: '156ms',
+                        modelVersion: 'v2.3.1'
+                    }
+                };
+            };
+            
+            const services = parseSystemState();
+            
+            // Drag functionality
+            useEffect(() => {
+                const handleMouseMove = (e) => {
+                    if (isDragging) {
+                        setPosition({
+                            x: e.clientX - dragOffset.x,
+                            y: e.clientY - dragOffset.y
+                        });
+                    }
+                };
+                
+                const handleMouseUp = () => setIsDragging(false);
+                
+                if (isDragging) {
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                }
+                
+                return () => {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+            }, [isDragging, dragOffset]);
+            
+            const handleMouseDown = (e) => {
+                if (e.target.closest('.drag-handle')) {
+                    const rect = widgetRef.current.getBoundingClientRect();
+                    setDragOffset({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    });
+                    setIsDragging(true);
+                }
+            };
+            
+            // Status Indicator Component
+            const StatusIndicator = ({ status }) => {
+                const styles = {
+                    operational: 'bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50',
+                    degraded: 'bg-yellow-500 animate-spin-warning shadow-lg shadow-yellow-500/50',
+                    down: 'bg-red-500 animate-ping-alert shadow-lg shadow-red-500/50'
+                };
+                
+                return (
+                    <div className="relative inline-flex items-center justify-center w-3 h-3">
+                        <div className={`w-2 h-2 rounded-full ${styles[status] || styles.operational}`}></div>
+                    </div>
+                );
+            };
+            
+            // Service Node Component
+            const ServiceNode = ({ title, status, icon, details, position, glowColor }) => (
+                <div className={`absolute ${position} transform transition-all duration-300 hover:scale-105`} style={{ zIndex: 10 }}>
+                    <div className="relative group">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${glowColor} rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity`}></div>
+                        <div className="relative bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-xl p-4 min-w-[220px] shadow-2xl">
+                            <div className="flex items-start gap-3">
+                                <div className="text-2xl mt-1">{icon}</div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <StatusIndicator status={status} />
+                                        <h3 className="text-white font-semibold text-sm">{title}</h3>
+                                    </div>
+                                    <div className="space-y-1">
+                                        {details.map((detail, idx) => (
+                                            <p key={idx} className="text-xs text-slate-300/80 font-mono">{detail}</p>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            // Minimized view
+            if (isMinimized) {
+                return (
+                    <div
+                        ref={widgetRef}
+                        style={{ position: 'fixed', left: `${position.x}px`, top: `${position.y}px`, zIndex: 9999 }}
+                        onMouseDown={handleMouseDown}
+                        className="drag-handle cursor-move"
+                    >
+                        <div
+                            onClick={() => setIsMinimized(false)}
+                            className="relative w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full shadow-2xl cursor-pointer hover:scale-110 transition-transform"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full animate-pulse opacity-50"></div>
+                            <div className="absolute inset-0 flex items-center justify-center text-white text-2xl">⚡</div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            // Full dashboard
+            return (
+                <div
+                    ref={widgetRef}
+                    style={{ position: 'fixed', left: `${position.x}px`, top: `${position.y}px`, zIndex: 9999, width: '850px', height: '700px' }}
+                    onMouseDown={handleMouseDown}
+                >
+                    <div className="relative w-full h-full bg-gradient-to-br from-slate-900/80 via-purple-900/60 to-slate-900/80 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+                        
+                        {/* Header */}
+                        <div className="drag-handle relative z-20 flex items-center justify-between px-6 py-4 bg-slate-900/40 backdrop-blur-sm border-b border-white/10 cursor-move">
+                            <div className="flex items-center gap-3">
+                                <div className="relative bg-gradient-to-r from-emerald-500 to-blue-500 p-2 rounded-lg">
+                                    <span className="text-white text-xl">⚡</span>
+                                </div>
+                                <div>
+                                    <h2 className="text-white font-bold text-lg">System Architecture Monitor</h2>
+                                    <p className="text-slate-400 text-xs">Real-time network visualization</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsMinimized(true)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
+                                —
+                            </button>
+                        </div>
+                        
+                        {/* Network visualization */}
+                        <div className="relative h-[calc(100%-76px)] p-8 overflow-hidden">
+                            
+                            {/* Service Nodes */}
+                            <ServiceNode
+                                title="SQL Database"
+                                status={services.sqlDatabase.status}
+                                icon="🗄️"
+                                details={[`Connections: ${services.sqlDatabase.activeConnections}`, `Latency: ${services.sqlDatabase.latency}`]}
+                                position="top-[20px] left-[20px]"
+                                glowColor="from-blue-500 to-cyan-500"
+                            />
+                            <ServiceNode
+                                title="Pinecone Status"
+                                status={services.pinecone.status}
+                                icon="🔷"
+                                details={[`Index: ${services.pinecone.index}`, `Vectors: ${services.pinecone.totalVectors}`]}
+                                position="top-[140px] left-[20px]"
+                                glowColor="from-purple-500 to-pink-500"
+                            />
+                            <ServiceNode
+                                title="Webhooks Config"
+                                status={services.webhooksConfig.status}
+                                icon="🔗"
+                                details={[`Active: ${services.webhooksConfig.activeHooks}`, `Last: ${services.webhooksConfig.lastEvent}`]}
+                                position="top-[260px] left-[20px]"
+                                glowColor="from-emerald-500 to-teal-500"
+                            />
+                            <ServiceNode
+                                title="Groq Cloud"
+                                status={services.groqCloud.status}
+                                icon="🧠"
+                                details={[`Model: ${services.groqCloud.model}`, `Latency: ${services.groqCloud.latency}`]}
+                                position="top-[20px] left-[280px]"
+                                glowColor="from-orange-500 to-red-500"
+                            />
+                            <ServiceNode
+                                title="Gemini API"
+                                status={services.geminiApi.status}
+                                icon="✨"
+                                details={[`Latency: ${services.geminiApi.latency}`, `Quota: ${services.geminiApi.quotaUsedToday}`]}
+                                position="top-[140px] left-[280px]"
+                                glowColor="from-blue-500 to-indigo-500"
+                            />
+                            <ServiceNode
+                                title="Lluma AI"
+                                status={services.llumaAi.status}
+                                icon="🤖"
+                                details={[`Latency: ${services.llumaAi.latency}`, `Ver: ${services.llumaAi.modelVersion}`]}
+                                position="top-[260px] left-[280px]"
+                                glowColor="from-violet-500 to-purple-500"
+                            />
+                            <ServiceNode
+                                title="Instagram API"
+                                status={services.instaGraphApi.status}
+                                icon="📱"
+                                details={[`Latency: ${services.instaGraphApi.latency}`, `Rate: ${services.instaGraphApi.rateLimitRemaining}`]}
+                                position="top-[20px] left-[540px]"
+                                glowColor="from-pink-500 to-rose-500"
+                            />
+                            <ServiceNode
+                                title="Scheduler"
+                                status={services.scheduler.status}
+                                icon="⏰"
+                                details={[`Jobs: ${services.scheduler.jobsQueued}`, `Next: ${services.scheduler.nextRun}`]}
+                                position="top-[140px] left-[540px]"
+                                glowColor="from-yellow-500 to-amber-500"
+                            />
+                            <ServiceNode
+                                title="Automation"
+                                status={services.automation.status}
+                                icon="⚡"
+                                details={[`Last: ${services.automation.lastTriggered}`, `Success: ${services.automation.successRate}`]}
+                                position="top-[340px] left-[540px]"
+                                glowColor="from-cyan-500 to-blue-500"
+                            />
+                            
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Main App Component
+        function App() {
+            const [systemState, setSystemState] = useState({});
+            
+            // Fetch system status (connect to your API)
+            useEffect(() => {
+                const fetchStatus = async () => {
+                    try {
+                        const response = await fetch('/api/system-status');
+                        const data = await response.json();
+                        setSystemState(data);
+                    } catch (error) {
+                        console.log('Using mock data');
+                    }
+                };
+                
+                fetchStatus();
+                const interval = setInterval(fetchStatus, 30000);
+                return () => clearInterval(interval);
+            }, []);
+            
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="container mx-auto">
+                        <h1 className="text-4xl font-bold text-white mb-4">
+                            Social Media Automation Platform
+                        </h1>
+                        <p className="text-white/60 mb-8">
+                            Advanced system monitoring with real-time visualization
+                        </p>
+                        
+                        {/* Demo content */}
+                        <div className="grid grid-cols-3 gap-6">
+                            {[
+                                { title: 'Posts Scheduled', value: '47', icon: '📅' },
+                                { title: 'Active Workflows', value: '12', icon: '⚡' },
+                                { title: 'AI Generations', value: '234', icon: '🧠' }
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-3xl">{stat.icon}</span>
+                                        <span className="text-3xl font-bold text-white">{stat.value}</span>
+                                    </div>
+                                    <h3 className="text-white/80 font-medium text-sm">{stat.title}</h3>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Floating Status Widget */}
+                    <AdvancedSystemStatusWidget systemState={systemState} />
+                </div>
+            );
+        }
+        
+        // Render app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow Status - PostScheduler{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32" style="vertical-align: middle;">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Workflow Status Monitor
+            </h2>
+            <p class="text-muted mb-0">Real-time system pipeline monitoring (Auto-refreshes every 60s)</p>
+        </div>
+        <div>
+            <button id="refresh-btn" class="btn btn-primary" onclick="manualRefresh()">
+                🔄 Refresh Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body" style="min-height: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; position: relative; overflow: hidden;">
+                    
+                    <!-- Background Pattern -->
+                    <div style="position: absolute; inset: 0; opacity: 0.1; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.03) 10px, rgba(255,255,255,.03) 20px);"></div>
+                    
+                    <!-- Info Banner -->
+                    <div class="alert alert-light mb-4" style="background: rgba(255,255,255,0.95); border: none; position: relative; z-index: 1;">
+                        <div class="d-flex align-items-center">
+                            <div style="font-size: 24px; margin-right: 12px;">ℹ️</div>
+                            <div>
+                                <strong>System Pipeline Status</strong>
+                                <p class="mb-0 small text-muted">
+                                    Monitor your social media automation workflow in real-time. 
+                                    Check the RAG Status page for detailed system configuration.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simple Status Display -->
+                    <div style="position: relative; z-index: 1; background: rgba(255,255,255,0.95); padding: 30px; border-radius: 12px;">
+                        <h4 class="mb-4">System Components</h4>
+                        <div id="status-container">
+                            <p class="text-center">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                Loading system status...
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Explanation Cards -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <span style="color: #10b981;">●</span> Operational
+                    </h5>
+                    <p class="card-text small text-muted">
+                        System component is running normally and responding within acceptable latency thresholds.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <span style="color: #f59e0b;">●</span> Warning
+                    </h5>
+                    <p class="card-text small text-muted">
+                        Component is operational but experiencing degraded performance or configuration issues.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <span style="color: #ef4444;">●</span> Down
+                    </h5>
+                    <p class="card-text small text-muted">
+                        Component is not responding or experiencing critical errors requiring immediate attention.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Components Info -->
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Pipeline Components</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Description</th>
+                            <th>Technology</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>User Input</strong></td>
+                            <td>Frontend interface for post creation and scheduling</td>
+                            <td>Flask + Jinja2 Templates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vector Database</strong></td>
+                            <td>RAG system knowledge base storing post embeddings</td>
+                            <td>Pinecone Serverless</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AI Engine</strong></td>
+                            <td>Hybrid RAG system for intelligent DM responses</td>
+                            <td>Groq (Llama 3) + Gemini Vision</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scheduler</strong></td>
+                            <td>Background job processor for timed post publishing</td>
+                            <td>APScheduler + PostgreSQL</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Social API</strong></td>
+                            <td>Integration with Instagram Graph API</td>
+                            <td>Instagram Business API</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card mt-4 mb-5 shadow-sm border-info">
+        <div class="card-body">
+            <h5 class="card-title text-info">Related Resources</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('rag.status') }}" class="btn btn-outline-primary btn-sm">
+                    🧠 RAG System Status
+                </a>
+                <a href="{{ url_for('settings.index') }}" class="btn btn-outline-secondary btn-sm">
+                    ⚙️ System Settings
+                </a>
+                <a href="{{ url_for('dm.conversations') }}" class="btn btn-outline-info btn-sm">
+                    💬 DM Conversations
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function fetchStatus() {
+    try {
+        const response = await fetch('/api/status/system');
+        const data = await response.json();
+        
+        const container = document.getElementById('status-container');
+        let html = '<div class="row">';
+        
+        const nodes = [
+            { key: 'user-input', name: 'User Input', icon: '📝' },
+            { key: 'vector-db', name: 'Vector Database', icon: '🗄️' },
+            { key: 'ai-engine', name: 'AI Engine', icon: '🤖' },
+            { key: 'scheduler', name: 'Scheduler', icon: '⏰' },
+            { key: 'social-api', name: 'Social API', icon: '📱' }
+        ];
+        
+        nodes.forEach(node => {
+            const status = data[node.key];
+            const statusClass = status.status === 'operational' ? 'success' : 
+                               status.status === 'warning' ? 'warning' : 'danger';
+            const statusColor = status.status === 'operational' ? '#10b981' : 
+                               status.status === 'warning' ? '#f59e0b' : '#ef4444';
+            const statusText = status.status === 'operational' ? 'Operational' : 
+                              status.status === 'warning' ? 'Warning' : 'Down';
+            
+            html += `
+                <div class="col-md-4 mb-3">
+                    <div class="card border-${statusClass}">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h6 class="mb-0">${node.icon} ${node.name}</h6>
+                                <span style="font-size: 24px; color: ${statusColor};">●</span>
+                            </div>
+                            <p class="mb-1">
+                                <strong style="color: ${statusColor};">${statusText}</strong>
+                            </p>
+                            <small class="text-muted">${status.details}</small><br>
+                            <small class="text-muted">Latency: ${status.latency}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+        
+    } catch (error) {
+        document.getElementById('status-container').innerHTML = 
+            '<div class="alert alert-danger">Failed to load status: ' + error.message + '</div>';
+    }
+}
+
+// Initial load
+fetchStatus();
+
+// Auto-refresh every 60 seconds (1 minute)
+setInterval(fetchStatus, 60000);
+
+// Add manual refresh button functionality
+function manualRefresh() {
+    const btn = document.getElementById('refresh-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Refreshing...';
+        fetchStatus().finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 Refresh Now';
+        });
+    }
+}
+</script>
+
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    .gap-2 {
+        gap: 0.5rem;
+    }
+    
+    .d-flex.flex-wrap {
+        display: flex;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
