@@ -2,12 +2,19 @@
 Flask route to serve System Status Monitor data
 Add this to app/routes.py or create app/status_routes.py
 """
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template
 from datetime import datetime
+from .auth import login_required
 
-status_bp = Blueprint('status', __name__, url_prefix='/api/status')
+status_bp = Blueprint('status', __name__)
 
-@status_bp.route('/system', methods=['GET'])
+@status_bp.route('/workflow-status')
+@login_required
+def workflow_status():
+    """Workflow Status page with embedded monitoring widget"""
+    return render_template('workflow_status.html')
+
+@status_bp.route('/api/status/system', methods=['GET'])
 def get_system_status():
     """
     Return real-time system status for the monitoring widget.
