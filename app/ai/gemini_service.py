@@ -222,6 +222,12 @@ def should_auto_reply(message_text, conversation):
     if not settings or not settings.auto_reply_enabled:
         return False, "Auto-reply is disabled"
     
+    # Check if message is too old (don't reply to messages older than 5 minutes)
+    from datetime import datetime, timedelta
+    five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+    if conversation.last_message_at and conversation.last_message_at < five_minutes_ago:
+        return False, "Message too old (> 5 minutes)"
+    
     # Check business hours
     if not is_within_business_hours():
         return False, "Outside business hours"

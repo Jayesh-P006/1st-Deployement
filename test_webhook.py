@@ -114,20 +114,9 @@ def test_gemini_api():
     gemini_key = os.getenv('GEMINI_API_KEY')
     if gemini_key:
         print(f"✓ GEMINI_API_KEY is set ({gemini_key[:10]}...)")
-        
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel('gemini-pro')
-            
-            # Test generation
-            response = model.generate_content("Say 'API working' if you can read this.")
-            print(f"✓ Gemini API is working")
-            print(f"  Test response: {response.text[:50]}...")
-            return True
-        except Exception as e:
-            print(f"✗ Gemini API error: {e}")
-            return False
+        print("⚠ Skipping actual API test to preserve quota")
+        print("  (Gemini API test disabled to prevent unnecessary API calls)")
+        return True
     else:
         print("⚠ GEMINI_API_KEY not set")
         print("  Webhooks will still work but will use fallback messages")
