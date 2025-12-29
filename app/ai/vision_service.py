@@ -61,11 +61,14 @@ def analyze_image_for_caption(image_path, platform='instagram', draft_title=''):
 Context: This is for a post titled "{draft_title}"
 
 Requirements:
-- Write 2-3 sentences that are catchy and authentic
-- Include relevant emojis naturally
-- Make it conversational and relatable
-- Focus on the visual elements in the image
-- Keep it under 150 characters for better engagement
+- Write 4-6 sentences that tell a story or provide context
+- Start with an attention-grabbing hook
+- Include relevant emojis naturally throughout (3-5 emojis)
+- Make it conversational, authentic, and engaging
+- Describe what's in the image and add value or insight
+- Use line breaks between sentences for better readability
+- End with a question or call-to-action to boost engagement
+- Aim for 300-500 characters for optimal engagement
 - Don't use hashtags (we'll add them separately)
 
 Generate ONLY the caption text, nothing else."""
@@ -76,12 +79,16 @@ Generate ONLY the caption text, nothing else."""
 Context: This is for a post titled "{draft_title}"
 
 Requirements:
-- Write 2-3 professional but engaging sentences
-- Use minimal emojis (1-2 max)
-- Focus on value, insights, or professional context
-- Keep tone authentic but polished
-- Highlight what's visible in the image
-- Keep it concise (under 200 characters)
+- Write 4-6 professional but engaging sentences
+- Start with a strong opening that captures attention
+- Use minimal emojis (2-3 max, placed strategically)
+- Focus on insights, learnings, or professional value
+- Add context about what's shown in the image
+- Keep tone authentic, thought-provoking, and polished
+- Use line breaks for better readability
+- End with a question to encourage discussion
+- Aim for 400-600 characters
+- Make it shareable and conversation-worthy
 
 Generate ONLY the caption text, nothing else."""
         
@@ -150,11 +157,14 @@ def analyze_multiple_images(image_paths, platform='instagram', draft_title=''):
             prompt = f"""Analyze these {len(images)} images for an Instagram carousel post titled "{draft_title}".
 
 Requirements:
-- Write ONE cohesive caption that works for all images
-- Mention that this is a multi-image post if relevant
-- Keep it engaging and authentic (2-3 sentences)
-- Use emojis naturally
-- Under 150 characters
+- Write ONE cohesive caption (4-6 sentences) that works for all images
+- Start with an engaging hook that makes people want to swipe
+- Mention this is a carousel/multi-image post naturally
+- Use emojis throughout (3-5 emojis)
+- Tell a story or provide context that connects all images
+- Use line breaks for readability
+- End with a call-to-action (e.g., "Swipe to see more!")
+- Aim for 350-550 characters
 - No hashtags
 
 Generate ONLY the caption text."""
@@ -163,10 +173,14 @@ Generate ONLY the caption text."""
             prompt = f"""Analyze these {len(images)} images for a LinkedIn post titled "{draft_title}".
 
 Requirements:
-- Write ONE professional caption that ties all images together
-- Keep it polished but authentic (2-3 sentences)
-- Minimal emojis (1-2 max)
-- Under 200 characters
+- Write ONE professional caption (4-6 sentences) that ties all images together
+- Start with a compelling opening
+- Provide insights or value from what's shown across all images
+- Use minimal emojis (2-3 max)
+- Keep tone authentic and thought-provoking
+- Use line breaks for readability
+- End with a question to drive engagement
+- Aim for 450-650 characters
 
 Generate ONLY the caption text."""
         
