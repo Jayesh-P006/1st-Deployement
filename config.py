@@ -44,19 +44,6 @@ def get_database_url():
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-
-    # Public contact email (used for Privacy Policy / Terms / Data Deletion pages)
-    CONTACT_EMAIL = os.getenv('CONTACT_EMAIL', '')
-
-    # Optional policy knobs
-    # If set to a positive integer, the app may retain DM message records for up to this many days.
-    # If unset/empty, retention is "until deleted".
-    DATA_RETENTION_DAYS = os.getenv('DATA_RETENTION_DAYS', '')
-    # Target timeframe to process verified deletion requests (shown on the public page)
-    DATA_DELETION_REQUEST_DAYS = os.getenv('DATA_DELETION_REQUEST_DAYS', '30')
-
-    # Cache TTL for Meta account status checks (seconds). Helps reduce Graph API calls.
-    ACCOUNT_STATUS_CACHE_SECONDS = os.getenv('ACCOUNT_STATUS_CACHE_SECONDS', '300')
     
     # Database Configuration - auto-detects Railway MySQL or PostgreSQL
     SQLALCHEMY_DATABASE_URI = get_database_url()
@@ -88,7 +75,7 @@ class Config:
     
     # Gemini AI Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
     
     # Timezone Configuration (for converting user input to UTC)
     # Set to your local timezone, e.g., 'Asia/Kolkata' for IST
@@ -97,29 +84,3 @@ class Config:
     # Instagram Webhook Configuration
     WEBHOOK_VERIFY_TOKEN = os.getenv('WEBHOOK_VERIFY_TOKEN', 'your-secure-verify-token-123')
     INSTAGRAM_APP_SECRET = os.getenv('INSTAGRAM_APP_SECRET', '')  # For signature verification
-    
-    # ============================================================
-    # RAG SYSTEM CONFIGURATION (Token-Optimized Architecture)
-    # ============================================================
-    
-    # Groq API Configuration (For Llama 3 - "The Talker")
-    # Free Tier: 30 requests/minute, 14,400 requests/day
-    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
-    GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama3-8b-8192')  # 8k context window
-    
-    # Pinecone Configuration (For Vector Storage)
-    # Using Serverless Starter Index
-    PINECONE_API_KEY = os.getenv('PINECONE_API_KEY', '')
-    PINECONE_ENVIRONMENT = os.getenv('PINECONE_ENVIRONMENT', 'us-east-1')  # AWS region
-    PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME', 'social-media-posts')
-    
-    # RAG Token Optimization Settings
-    # These settings are critical for staying within free tier limits
-    RAG_RETRIEVAL_K = int(os.getenv('RAG_RETRIEVAL_K', '1'))  # Retrieve only 1 most relevant chunk
-    RAG_MAX_CONTEXT_TOKENS = int(os.getenv('RAG_MAX_CONTEXT_TOKENS', '200'))  # ConversationBufferMemory limit
-    RAG_RATE_LIMIT_DELAY = float(os.getenv('RAG_RATE_LIMIT_DELAY', '2.0'))  # 2 second delay between Groq calls
-    
-    # Gemini Vision Configuration (For "The Learner")
-    # Using Gemini 1.5 Flash for cost-effective vision processing
-    GEMINI_VISION_MODEL = os.getenv('GEMINI_VISION_MODEL', 'gemini-1.5-flash')
-    GEMINI_EMBEDDING_MODEL = os.getenv('GEMINI_EMBEDDING_MODEL', 'models/text-embedding-004')

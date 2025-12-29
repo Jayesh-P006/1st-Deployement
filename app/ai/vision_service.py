@@ -13,8 +13,8 @@ def initialize_vision_model():
         raise ValueError('GEMINI_API_KEY not configured')
     
     genai.configure(api_key=api_key)
-    # Use gemini-2.0-flash for vision capabilities
-    return genai.GenerativeModel('gemini-2.0-flash')
+    # Use gemini-2.5-flash for vision capabilities
+    return genai.GenerativeModel('gemini-2.5-flash')
 
 def generate_fallback_caption(platform='instagram', draft_title=''):
     """Generate a template caption when Gemini API is unavailable"""
