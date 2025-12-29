@@ -310,6 +310,13 @@ def generate_caption_from_images(draft_id):
     draft = PostDraft.query.get_or_404(draft_id)
     
     try:
+        # Check if Gemini API is configured
+        if not current_app.config.get('GEMINI_API_KEY'):
+            return jsonify({
+                'success': False,
+                'error': 'Gemini API not configured. Please add GEMINI_API_KEY to environment variables.'
+            }), 503
+        
         if not draft.image_path:
             return jsonify({
                 'success': False,
@@ -317,6 +324,20 @@ def generate_caption_from_images(draft_id):
             }), 400
         
         image_paths = json.loads(draft.image_path)
+        
+        # Add rate limiting check - max 5 caption generations per minute
+        from datetime import timedelta
+        one_minute_ago = datetime.utcnow() - timedelta(minutes=1)
+        recent_activities = Activity.query.filter(
+            Activity.action == 'generated_caption',
+            Activity.created_at >= one_minute_ago
+        ).count()
+        
+        if recent_activities >= 5:
+            return jsonify({
+                'success': False,
+                'error': 'Rate limit exceeded. Please wait a minute before generating more captions.'
+            }), 429
         
         if len(image_paths) == 1:
             result = analyze_image_for_caption(
@@ -332,6 +353,16 @@ def generate_caption_from_images(draft_id):
             )
         
         if result['success']:
+            # Log the caption generation
+            activity = Activity(
+                draft_id=draft.id,
+                user_id=get_current_user().id,
+                action='generated_caption',
+                description='Generated caption using Gemini Vision'
+            )
+            db.session.add(activity)
+            db.session.commit()
+            
             return jsonify({
                 'success': True,
                 'caption': result['caption']
