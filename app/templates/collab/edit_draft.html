@@ -669,6 +669,11 @@ body {
 
 .notification-success { border-left: 4px solid #10b981; }
 .notification-error { border-left: 4px solid #ef4444; }
+.notification-warning { 
+    border-left: 4px solid #f59e0b;
+    background: #fef3c7;
+    color: #92400e;
+}
 
 </style>
 
@@ -1046,7 +1051,13 @@ if (generateBtn) {
             if (data.success) {
                 contentTextarea.value = data.caption;
                 charCount.textContent = data.caption.length;
-                showNotification('Caption generated successfully! ✨', 'success');
+                
+                // Show different message based on whether it's AI or fallback
+                if (data.is_fallback) {
+                    showNotification('⚠️ ' + (data.warning || 'AI quota exceeded. Using template caption - please customize it!'), 'warning');
+                } else {
+                    showNotification('Caption generated successfully! ✨', 'success');
+                }
             } else {
                 showNotification('Failed to generate caption: ' + data.error, 'error');
             }

@@ -358,15 +358,22 @@ def generate_caption_from_images(draft_id):
                 draft_id=draft.id,
                 user_id=get_current_user().id,
                 action='generated_caption',
-                description='Generated caption using Gemini Vision'
+                description='Generated caption using Gemini Vision' if not result.get('is_fallback') else 'Used fallback caption template'
             )
             db.session.add(activity)
             db.session.commit()
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'caption': result['caption']
-            })
+            }
+            
+            # Add warning if it's a fallback caption
+            if result.get('is_fallback'):
+                response_data['warning'] = result.get('warning', 'Using template caption. Please customize.')
+                response_data['is_fallback'] = True
+            
+            return jsonify(response_data)
         else:
             return jsonify({
                 'success': False,

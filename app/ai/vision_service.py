@@ -16,6 +16,26 @@ def initialize_vision_model():
     # Use gemini-2.0-flash for vision capabilities
     return genai.GenerativeModel('gemini-2.0-flash')
 
+def generate_fallback_caption(platform='instagram', draft_title=''):
+    """Generate a template caption when Gemini API is unavailable"""
+    if platform == 'instagram':
+        templates = [
+            f"✨ {draft_title}\n\nSwipe to see more! 📸",
+            f"🎯 {draft_title}\n\nDouble tap if you agree! 💫",
+            f"📢 {draft_title}\n\nTag someone who needs to see this! 👇",
+            f"💡 {draft_title}\n\nThoughts? Drop a comment below! 💬"
+        ]
+    else:  # LinkedIn
+        templates = [
+            f"🔔 {draft_title}\n\nLet's discuss in the comments.",
+            f"💼 {draft_title}\n\nShare your thoughts below.",
+            f"🎯 {draft_title}\n\nWhat's your take on this?",
+            f"📊 {draft_title}\n\nInsights welcome in the comments."
+        ]
+    
+    import random
+    return random.choice(templates)
+
 def analyze_image_for_caption(image_path, platform='instagram', draft_title=''):
     """
     Analyze image and generate engaging social media caption
@@ -26,7 +46,7 @@ def analyze_image_for_caption(image_path, platform='instagram', draft_title=''):
         draft_title: Title of the draft for context
         
     Returns:
-        dict: {'success': bool, 'caption': str, 'error': str}
+        dict: {'success': bool, 'caption': str, 'error': str, 'is_fallback': bool}
     """
     try:
         model = initialize_vision_model()
@@ -83,11 +103,29 @@ Generate ONLY the caption text, nothing else."""
             }
             
     except Exception as e:
+        error_str = str(e)
         current_app.logger.error(f'Vision analysis error: {e}')
+        
+        # Check if it's a quota error
+        if '429' in error_str or 'quota' in error_str.lower() or 'rate limit' in error_str.lower():
+            # Use fallback caption
+            fallback_caption = generate_fallback_caption(platform, draft_title)
+            return {
+                'success': True,
+                'caption': fallback_caption,
+                'error': None,
+                'is_fallback': True,
+                'warning': 'AI quota exceeded. Generated a template caption. Please customize it.'
+            }
+        
+        # For other errors, return fallback with error message
+        fallback_caption = generate_fallback_caption(platform, draft_title)
         return {
-            'success': False,
-            'caption': None,
-            'error': str(e)
+            'success': True,
+            'caption': fallback_caption,
+            'error': None,
+            'is_fallback': True,
+            'warning': f'AI temporarily unavailable. Generated a template caption. Please customize it.'
         }
 
 def analyze_multiple_images(image_paths, platform='instagram', draft_title=''):
@@ -100,7 +138,7 @@ def analyze_multiple_images(image_paths, platform='instagram', draft_title=''):
         draft_title: Title of the draft
         
     Returns:
-        dict: {'success': bool, 'caption': str, 'error': str}
+        dict: {'success': bool, 'caption': str, 'error': str, 'is_fallback': bool}
     """
     try:
         model = initialize_vision_model()
@@ -150,11 +188,29 @@ Generate ONLY the caption text."""
             }
             
     except Exception as e:
+        error_str = str(e)
         current_app.logger.error(f'Multi-image vision analysis error: {e}')
+        
+        # Check if it's a quota error
+        if '429' in error_str or 'quota' in error_str.lower() or 'rate limit' in error_str.lower():
+            # Use fallback caption
+            fallback_caption = generate_fallback_caption(platform, draft_title)
+            return {
+                'success': True,
+                'caption': fallback_caption,
+                'error': None,
+                'is_fallback': True,
+                'warning': 'AI quota exceeded. Generated a template caption. Please customize it.'
+            }
+        
+        # For other errors, return fallback
+        fallback_caption = generate_fallback_caption(platform, draft_title)
         return {
-            'success': False,
-            'caption': None,
-            'error': str(e)
+            'success': True,
+            'caption': fallback_caption,
+            'error': None,
+            'is_fallback': True,
+            'warning': 'AI temporarily unavailable. Generated a template caption. Please customize it.'
         }
 
 def suggest_hashtags(caption, platform='instagram', max_tags=10):
