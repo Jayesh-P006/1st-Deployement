@@ -118,9 +118,7 @@ def test_gemini_api():
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_key)
-            model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
-            model = genai.GenerativeModel(model_name)
-            print(f"  Using model: {model_name}")
+            model = genai.GenerativeModel('gemini-pro')
             
             # Test generation
             response = model.generate_content("Say 'API working' if you can read this.")

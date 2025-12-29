@@ -5,6 +5,7 @@ import json
 from . import db
 from .models import PostDraft, User, Comment, Activity, ScheduledPost, TokenUsage
 from .auth import login_required, role_required, get_current_user
+from .ai.vision_service import analyze_image_for_caption, analyze_multiple_images
 
 collab_bp = Blueprint('collab', __name__, url_prefix='/collab')
 
@@ -301,3 +302,71 @@ def delete_draft(draft_id):
     
     flash('Draft deleted successfully.', 'success')
     return redirect(url_for('collab.drafts'))
+
+@collab_bp.route('/api/draft/<int:draft_id>/generate-caption', methods=['POST'])
+@login_required
+def generate_caption_from_images(draft_id):
+    """API endpoint to generate caption from uploaded images using Gemini Vision"""
+    draft = PostDraft.query.get_or_404(draft_id)
+    
+    try:
+        if not draft.image_path:
+            return jsonify({
+                'success': False,
+                'error': 'No images uploaded yet'
+            }), 400
+        
+        image_paths = json.loads(draft.image_path)
+        
+        if len(image_paths) == 1:
+            result = analyze_image_for_caption(
+                image_paths[0],
+                platform=draft.platform,
+                draft_title=draft.title
+            )
+        else:
+            result = analyze_multiple_images(
+                image_paths,
+                platform=draft.platform,
+                draft_title=draft.title
+            )
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'caption': result['caption']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+            
+    except Exception as e:
+        current_app.logger.error(f'Caption generation error: {e}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@collab_bp.route('/api/draft/<int:draft_id>/comments', methods=['GET'])
+@login_required
+def get_comments(draft_id):
+    """API endpoint to fetch latest comments for real-time updates"""
+    draft = PostDraft.query.get_or_404(draft_id)
+    comments = Comment.query.filter_by(draft_id=draft_id).order_by(Comment.created_at.desc()).all()
+    
+    comments_data = [{
+        'id': c.id,
+        'author': c.author.full_name if c.author else 'Unknown',
+        'content': c.content,
+        'comment_type': c.comment_type,
+        'created_at': c.created_at.strftime('%b %d, %H:%M'),
+        'timestamp': c.created_at.isoformat()
+    } for c in comments]
+    
+    return jsonify({
+        'success': True,
+        'comments': comments_data,
+        'count': len(comments_data)
+    })

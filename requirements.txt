@@ -5,28 +5,7 @@ python-dotenv==1.0.1
 requests==2.32.3
 PyMySQL==1.1.0
 google-generativeai>=0.8.0
+Pillow>=10.0.0
 cryptography==41.0.7
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
-
-# RAG System Dependencies
-# ========================
-# LangChain core and community packages
-langchain>=0.1.0
-langchain-community>=0.0.20
-langchain-core>=0.1.0
-
-# LLM Provider Integrations
-langchain-google-genai>=1.0.0  # Gemini 1.5 Flash + Embeddings
-langchain-groq>=0.0.1          # Llama 3 via Groq API
-
-# Vector Database
-langchain-pinecone>=0.1.0      # Pinecone vector store integration
-pinecone-client>=3.0.0         # Pinecone Python client
-
-# Image Processing (for in-memory image handling)
-Pillow>=10.0.0                 # PIL for image validation
-
-# Additional LangChain utilities
-tiktoken>=0.5.0                # Token counting for OpenAI models (optional)
-faiss-cpu>=1.7.4               # Optional: Local vector store for testing
