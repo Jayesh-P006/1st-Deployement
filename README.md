@@ -1,12 +1,12 @@
 # 🚀 Social Media Post Scheduler
 
-A collaborative social media management platform for teams to create, manage, and schedule posts across Instagram and LinkedIn with role-based permissions and AI-powered assistance.
+A collaborative social media management platform for teams to create, manage, and schedule posts for Instagram with role-based permissions and AI-powered assistance.
 
 ## ✨ Features
 
 ### Core Features
 - **Collaborative Draft System** - Team members work together on post drafts
-- **Multi-Platform Support** - Schedule posts for Instagram and LinkedIn
+- **Multi-Platform Support** - Schedule posts for Instagram
 - **Role-Based Access Control** - Lead, Co-Lead, and Member positions with different permissions
 - **Vertical Organization** - Organize team by verticals (Content, Social Media, Design, Marketing, PR, etc.)
 - **Draft Workflow** - Draft → Review → Approved → Scheduled → Published
@@ -25,7 +25,6 @@ A collaborative social media management platform for teams to create, manage, an
 - Python 3.8+
 - MySQL Database
 - Instagram Business Account (for Instagram features)
-- LinkedIn Developer Account (for LinkedIn features)
 - Google Gemini API Key (for AI features)
 
 ## 🛠️ Installation
@@ -55,8 +54,6 @@ SECRET_KEY=your-secret-key-here
 DATABASE_URL=mysql://username:password@localhost/dbname
 INSTAGRAM_ACCESS_TOKEN=your-instagram-token
 INSTAGRAM_USER_ID=your-instagram-user-id
-LINKEDIN_ACCESS_TOKEN=your-linkedin-token
-LINKEDIN_USER_ID=your-linkedin-user-id
 GEMINI_API_KEY=your-gemini-api-key
 PUBLIC_URL=your-ngrok-url
 WEBHOOK_VERIFY_TOKEN=your-webhook-token
@@ -95,7 +92,6 @@ app/
 ├── social/
 │   ├── instagram.py         # Instagram API
 │   ├── instagram_webhooks.py
-│   └── linkedin.py          # LinkedIn API
 ├── static/css/
 │   └── style.css            # Global styles
 └── templates/

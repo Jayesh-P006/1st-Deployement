@@ -63,7 +63,6 @@ def create_app():
 
     from .models import ScheduledPost, TokenUsage
     from .social.instagram import post_to_instagram
-    from .social.linkedin import post_to_linkedin
 
     def execute_post(post_id):
         with app.app_context():
@@ -74,8 +73,8 @@ def create_app():
                 token_used = 0
                 if post.platform == 'instagram':
                     token_used = post_to_instagram(post)
-                elif post.platform == 'linkedin':
-                    token_used = post_to_linkedin(post)
+                else:
+                    raise ValueError(f'Unsupported platform: {post.platform}')
                 post.status = 'posted'
                 post.token_used = token_used
                 
@@ -102,8 +101,8 @@ def create_app():
                     token_used = 0
                     if post.platform == 'instagram':
                         token_used = post_to_instagram(post)
-                    elif post.platform == 'linkedin':
-                        token_used = post_to_linkedin(post)
+                    else:
+                        raise ValueError(f'Unsupported platform: {post.platform}')
                     post.status = 'posted'
                     post.token_used = token_used
                     
@@ -120,10 +119,9 @@ def create_app():
         db.create_all()
         
         # Initialize token usage if not exists
-        for platform in ['instagram', 'linkedin']:
-            if not TokenUsage.query.filter_by(platform=platform).first():
-                usage = TokenUsage(platform=platform, total_limit=200, used_today=0)
-                db.session.add(usage)
+        if not TokenUsage.query.filter_by(platform='instagram').first():
+            usage = TokenUsage(platform='instagram', total_limit=200, used_today=0)
+            db.session.add(usage)
         db.session.commit()
         
         # Add a periodic job that checks every minute for pending posts

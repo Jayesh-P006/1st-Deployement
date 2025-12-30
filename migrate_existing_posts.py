@@ -11,7 +11,7 @@ Usage:
 Options:
     --limit N       Only ingest first N posts (for testing)
     --force         Re-ingest posts even if already marked as ingested
-    --platform P    Only ingest posts from specific platform (instagram/linkedin)
+    --platform P    Only ingest posts from Instagram
     --dry-run       Show what would be ingested without actually doing it
 
 Examples:
@@ -48,7 +48,7 @@ def migrate_posts(limit=None, force=False, platform=None, dry_run=False):
     Args:
         limit: Maximum number of posts to migrate (None = all)
         force: Re-ingest posts even if already marked as ingested
-        platform: Filter by platform ('instagram', 'linkedin', or None for all)
+        platform: Filter by platform ('instagram' or None for all)
         dry_run: Show what would be done without actually doing it
     """
     # Import here to avoid errors if DB not initialized
@@ -236,9 +236,9 @@ def main():
     parser.add_argument(
         '--platform',
         type=str,
-        choices=['instagram', 'linkedin'],
+        choices=['instagram'],
         default=None,
-        help='Only ingest posts from specific platform'
+        help='Only ingest posts from Instagram platform'
     )
     
     parser.add_argument(

@@ -7,7 +7,7 @@
 #### 1. **Gemini Vision AI Integration** 🤖
 - **Auto-caption generation** from uploaded images
 - Supports single and multiple image analysis
-- Platform-specific captions (Instagram vs LinkedIn)
+- Platform-specific captions (Instagram only)
 - Smart hashtag suggestions
 - API endpoint: `/api/draft/<id>/generate-caption`
 

@@ -69,10 +69,6 @@ class Config:
     INSTAGRAM_ACCESS_TOKEN = os.getenv('INSTAGRAM_ACCESS_TOKEN', '')
     INSTAGRAM_BUSINESS_ACCOUNT_ID = os.getenv('INSTAGRAM_BUSINESS_ACCOUNT_ID', '')
     
-    # LinkedIn Configuration
-    LINKEDIN_ACCESS_TOKEN = os.getenv('LINKEDIN_ACCESS_TOKEN', '')
-    LINKEDIN_ORGANIZATION_ID = os.getenv('LINKEDIN_ORGANIZATION_ID', '')
-    
     # Gemini AI Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')

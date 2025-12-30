@@ -193,11 +193,10 @@ VALUES (
     NOW()
 );
 
--- Initialize API Usage for Instagram and LinkedIn
+-- Initialize API Usage for Instagram only
 INSERT INTO api_usage (platform, used_today, total_limit, last_reset)
 VALUES 
-    ('instagram', 0, 200, NOW()),
-    ('linkedin', 0, 200, NOW());
+    ('instagram', 0, 200, NOW());
 ```
 
 ---
@@ -251,10 +250,6 @@ PUBLIC_URL=http://127.0.0.1:5000
 INSTAGRAM_ACCESS_TOKEN=your_instagram_access_token
 INSTAGRAM_BUSINESS_ACCOUNT_ID=your_business_account_id
 
-# LinkedIn Configuration (Optional - for posting features)
-LINKEDIN_ACCESS_TOKEN=your_linkedin_access_token
-LINKEDIN_ORGANIZATION_ID=your_organization_id
-
 # Gemini AI Configuration (Optional - for AI features)
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-pro
@@ -302,7 +297,6 @@ Use these credentials to login for the first time:
 
 ### 2. Configure Social Media APIs (Optional)
 - **Instagram:** Get access token from Meta Developer Console
-- **LinkedIn:** Get access token from LinkedIn Developer Portal
 - **Gemini AI:** Get API key from Google AI Studio
 
 ### 3. Create Additional Users
@@ -353,7 +347,6 @@ python migrate_draft_fields.py
 - **Flask Documentation:** https://flask.palletsprojects.com/
 - **SQLAlchemy Documentation:** https://docs.sqlalchemy.org/
 - **Instagram Graph API:** https://developers.facebook.com/docs/instagram-api/
-- **LinkedIn API:** https://learn.microsoft.com/en-us/linkedin/
 
 ---
 

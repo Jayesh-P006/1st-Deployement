@@ -90,7 +90,6 @@ def index():
     
     # Token usage
     insta_usage = TokenUsage.query.filter_by(platform='instagram').first()
-    linkedin_usage = TokenUsage.query.filter_by(platform='linkedin').first()
     
     return render_template('index.html', 
                          posts=posts, 
@@ -99,20 +98,19 @@ def index():
                          scheduled=scheduled,
                          failed=failed,
                          success_rate=success_rate,
-                         insta_usage=insta_usage,
-                         linkedin_usage=linkedin_usage)
+                         insta_usage=insta_usage)
 
 @main_bp.route('/new', methods=['GET', 'POST'])
 @login_required
 def new_post():
     if request.method == 'POST':
-        platform = request.form.get('platform')
+        platform = request.form.get('platform', 'instagram')  # Default to Instagram
         content = request.form.get('content', '').strip()
         scheduled_time_str = request.form.get('scheduled_time')
         image = request.files.get('image')
 
-        if not platform or platform not in ['instagram', 'linkedin']:
-            flash('Select a valid platform.', 'error')
+        if platform != 'instagram':
+            flash('Only Instagram platform is supported.', 'error')
             return redirect(url_for('main.new_post'))
         if not content:
             flash('Content is required.', 'error')
@@ -155,9 +153,8 @@ def new_post():
 
     # Get token usage for display
     insta_usage = TokenUsage.query.filter_by(platform='instagram').first()
-    linkedin_usage = TokenUsage.query.filter_by(platform='linkedin').first()
     
-    return render_template('new_post.html', insta_usage=insta_usage, linkedin_usage=linkedin_usage)
+    return render_template('new_post.html', insta_usage=insta_usage)
 
 @main_bp.route('/preview/<int:post_id>')
 def preview_post(post_id):
@@ -170,13 +167,13 @@ def edit_post(post_id):
     post = ScheduledPost.query.get_or_404(post_id)
     
     if request.method == 'POST':
-        platform = request.form.get('platform')
+        platform = request.form.get('platform', 'instagram')  # Default to Instagram
         content = request.form.get('content', '').strip()
         scheduled_time_str = request.form.get('scheduled_time')
         image = request.files.get('image')
 
-        if not platform or platform not in ['instagram', 'linkedin']:
-            flash('Select a valid platform.', 'error')
+        if platform != 'instagram':
+            flash('Only Instagram platform is supported.', 'error')
             return redirect(url_for('main.edit_post', post_id=post_id))
         if not content:
             flash('Content is required.', 'error')
@@ -230,13 +227,12 @@ def edit_post(post_id):
 
     # Get token usage for display
     insta_usage = TokenUsage.query.filter_by(platform='instagram').first()
-    linkedin_usage = TokenUsage.query.filter_by(platform='linkedin').first()
     
     # Convert stored UTC time to local time for the edit form
     tz_name = current_app.config.get('APP_TIMEZONE', 'Asia/Kolkata')
     local_scheduled_time = convert_utc_to_local(post.scheduled_time, tz_name)
     
-    return render_template('edit_post.html', post=post, insta_usage=insta_usage, linkedin_usage=linkedin_usage, local_scheduled_time=local_scheduled_time)
+    return render_template('edit_post.html', post=post, insta_usage=insta_usage, local_scheduled_time=local_scheduled_time)
 
 @main_bp.route('/delete/<int:post_id>', methods=['POST'])
 @login_required
@@ -259,25 +255,18 @@ def delete_post(post_id):
 @login_required
 def token_status():
     insta = TokenUsage.query.filter_by(platform='instagram').first()
-    linkedin = TokenUsage.query.filter_by(platform='linkedin').first()
     return jsonify({
         'instagram': {
             'used': insta.used_today if insta else 0,
             'total': insta.total_limit if insta else 200,
             'remaining': insta.remaining() if insta else 200
-        },
-        'linkedin': {
-            'used': linkedin.used_today if linkedin else 0,
-            'total': linkedin.total_limit if linkedin else 200,
-            'remaining': linkedin.remaining() if linkedin else 200
         }
     })
 
 @main_bp.route('/api/account-status')
 def account_status():
-    """Get connection status for Instagram and LinkedIn accounts"""
+    """Get connection status for Instagram account"""
     from .social.instagram import check_instagram_account_status
-    from .social.linkedin import check_linkedin_account_status
     from flask import current_app
     from .models import DMConversation, DMMessage
 
@@ -299,7 +288,6 @@ def account_status():
             return jsonify(cached_value)
     
     instagram_status = check_instagram_account_status()
-    linkedin_status = check_linkedin_account_status()
 
     # Webhook status (lightweight heuristics)
     # - configured: required secrets/tokens exist
@@ -332,7 +320,6 @@ def account_status():
     
     payload = {
         'instagram': instagram_status,
-        'linkedin': linkedin_status,
     }
 
     if cache_ttl > 0:
