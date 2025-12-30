@@ -67,6 +67,23 @@
             background: #262626;
         }
 
+        .ig-back-btn {
+            background: #262626;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .ig-back-btn:hover {
+            background: #363636;
+            transform: scale(1.02);
+        }
+
         .ig-search-box {
             padding: 12px 20px;
             border-bottom: 1px solid #262626;
@@ -239,7 +256,8 @@
         .ig-message {
             display: flex;
             animation: slideIn 0.3s ease-out;
-            margin-bottom: 4px;
+            margin-bottom: 12px;
+            width: 100%;
         }
 
         @keyframes slideIn {
@@ -255,17 +273,28 @@
 
         .ig-message.incoming {
             justify-content: flex-start;
-            align-items: flex-start;
         }
 
         .ig-message.outgoing {
             justify-content: flex-end;
+        }
+
+        .ig-message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 60%;
+            min-width: 80px;
+        }
+
+        .ig-message.incoming .ig-message-wrapper {
+            align-items: flex-start;
+        }
+
+        .ig-message.outgoing .ig-message-wrapper {
             align-items: flex-end;
         }
 
         .ig-message-bubble {
-            max-width: 60%;
-            min-width: 80px;
             padding: 12px 16px;
             border-radius: 22px;
             font-size: 14px;
@@ -275,6 +304,7 @@
             word-break: break-word;
             overflow-wrap: break-word;
             white-space: pre-wrap;
+            display: inline-block;
         }
 
         .ig-message.incoming .ig-message-bubble {
@@ -312,9 +342,24 @@
         }
 
         .ig-message-error {
+            background: rgba(237, 73, 86, 0.15);
             color: #ed4956;
             font-size: 11px;
-            margin-top: 4px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border-left: 3px solid #ed4956;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            max-width: 100%;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .ig-message-error::before {
+            content: '⚠️';
+            flex-shrink: 0;
         }
 
         /* Composer */
@@ -455,11 +500,10 @@
         <!-- Sidebar -->
         <div class="ig-sidebar">
             <div class="ig-sidebar-header">
-                <h1>Messages</h1>
+                <button class="ig-back-btn" onclick="window.location.href='/'" title="Back to Dashboard">
+                    ← Go Back
+                </button>
                 <div class="ig-sidebar-actions">
-                    <button class="ig-icon-btn" onclick="window.location.href='/'" title="Back to Dashboard">
-                        🏠
-                    </button>
                     <button class="ig-icon-btn" onclick="syncMessages()" title="Sync Previous DMs">
                         🔄
                     </button>
@@ -517,7 +561,7 @@
             <div class="ig-messages" id="messagesContainer">
                 {% for message in messages %}
                 <div class="ig-message {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}" data-message-id="{{ message.id }}">
-                    <div>
+                    <div class="ig-message-wrapper">
                         <div class="ig-message-bubble">{{ message.message_text }}</div>
                         <div class="ig-message-meta">
                             <span>{{ message.created_at.strftime('%H:%M') }}</span>
@@ -525,7 +569,7 @@
                             {% if not message.sent_successfully and message.sender_type == 'bot' %}<span class="ig-message-tag" style="background: #ed4956;">Failed</span>{% endif %}
                         </div>
                         {% if message.error_message %}
-                        <div class="ig-message-error">⚠️ {{ message.error_message }}</div>
+                        <div class="ig-message-error">{{ message.error_message }}</div>
                         {% endif %}
                     </div>
                 </div>
@@ -605,14 +649,14 @@
             div.setAttribute('data-message-id', msg.id);
             
             div.innerHTML = `
-                <div>
+                <div class="ig-message-wrapper">
                     <div class="ig-message-bubble">${msg.message_text}</div>
                     <div class="ig-message-meta">
                         <span>${msg.created_at_time}</span>
                         ${msg.is_auto_reply ? '<span class="ig-message-tag">🤖 Auto</span>' : ''}
                         ${!msg.sent_successfully && msg.sender_type === 'bot' ? '<span class="ig-message-tag" style="background: #ed4956;">Failed</span>' : ''}
                     </div>
-                    ${msg.error_message ? `<div class="ig-message-error">⚠️ ${msg.error_message}</div>` : ''}
+                    ${msg.error_message ? `<div class="ig-message-error">${msg.error_message}</div>` : ''}
                 </div>
             `;
             
