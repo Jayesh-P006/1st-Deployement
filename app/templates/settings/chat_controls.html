@@ -177,15 +177,8 @@
 
 {% block scripts %}
 <script>
-// Auto-refresh stats every 30 seconds
-setInterval(() => {
-  fetch('{{ url_for("settings.api_status") }}')
-    .then(response => response.json())
-    .then(data => {
-      console.log('Status updated:', data);
-      // Could update UI here
-    })
-    .catch(error => console.error('Error fetching status:', error));
-}, 30000);
+// Auto-refresh disabled to reduce unnecessary API calls
+// Stats will update on page refresh
+console.log('Chat controls loaded');
 </script>
 {% endblock %}
