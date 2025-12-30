@@ -239,6 +239,7 @@
         .ig-message {
             display: flex;
             animation: slideIn 0.3s ease-out;
+            margin-bottom: 4px;
         }
 
         @keyframes slideIn {
@@ -254,19 +255,26 @@
 
         .ig-message.incoming {
             justify-content: flex-start;
+            align-items: flex-start;
         }
 
         .ig-message.outgoing {
             justify-content: flex-end;
+            align-items: flex-end;
         }
 
         .ig-message-bubble {
             max-width: 60%;
+            min-width: 80px;
             padding: 12px 16px;
             border-radius: 22px;
             font-size: 14px;
             line-height: 1.4;
             position: relative;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .ig-message.incoming .ig-message-bubble {
@@ -286,6 +294,14 @@
             margin-top: 4px;
             font-size: 11px;
             color: #8e8e8e;
+        }
+
+        .ig-message.incoming .ig-message-meta {
+            justify-content: flex-start;
+        }
+
+        .ig-message.outgoing .ig-message-meta {
+            justify-content: flex-end;
         }
 
         .ig-message-tag {
@@ -441,10 +457,13 @@
             <div class="ig-sidebar-header">
                 <h1>Messages</h1>
                 <div class="ig-sidebar-actions">
+                    <button class="ig-icon-btn" onclick="window.location.href='/'" title="Back to Dashboard">
+                        🏠
+                    </button>
                     <button class="ig-icon-btn" onclick="syncMessages()" title="Sync Previous DMs">
                         🔄
                     </button>
-                    <button class="ig-icon-btn" onclick="window.location.href='/settings'" title="Back to Settings">
+                    <button class="ig-icon-btn" onclick="window.location.href='/settings'" title="Settings">
                         ⚙️
                     </button>
                 </div>
