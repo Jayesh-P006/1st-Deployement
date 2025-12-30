@@ -9,50 +9,55 @@
 </head>
 <body>
   <nav class="nav">
-    <div class="container">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
       <a href="{% if session.get('user_id') %}{{ url_for('collab.drafts') }}{% else %}{{ url_for('auth.login') }}{% endif %}" class="brand">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm2 4h10v2H7v-2z"/></svg>
         PostScheduler
       </a>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        {% if session.get('user_id') %}
-          <a href="{{ url_for('collab.drafts') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef;">
-            📝 <span>Drafts</span>
-          </a>
-          <a href="{{ url_for('main.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef;">
-            📅 <span>Scheduled</span>
-          </a>
-          <a href="{{ url_for('automation.dashboard') }}" class="btn secondary" style="background: #fff; color: #8b5cf6; border: 1.5px solid #e9ecef;">
-            ⚡ <span>Automations</span>
-          </a>
-          <a href="{{ url_for('status.workflow_status') }}" class="btn secondary" style="background: #fff; color: #10b981; border: 1.5px solid #e9ecef;">
-            🔄 <span>Workflow</span>
-          </a>
-          <a href="{{ url_for('rag.status') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef;">
-            🧠 <span>RAG Status</span>
-          </a>
-          <a href="{{ url_for('settings.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef;">
-            ⚙️ <span>Settings</span>
-          </a>
-          <a href="{{ url_for('collab.new_draft') }}" class="btn" style="background: #28a745; color: #fff;">
-            <span style="font-size: 18px; line-height: 1;">+</span> <span>New Draft</span>
-          </a>
-          {% if session.get('role') == 'admin' %}
-          <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="background: #fff; color: #d63384; border: 1.5px solid #e9ecef;">
-            🛡️ <span>Admin</span>
-          </a>
-          {% endif %}
-          <a href="{{ url_for('auth.profile') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef;">
-            👤 <span>Profile</span>
-          </a>
-          <a href="{{ url_for('auth.logout') }}" class="btn danger" style="background: #dc3545; color: #fff;">
-            🚪 <span>Logout</span>
-          </a>
-        {% else %}
-          <a href="{{ url_for('auth.login') }}" class="btn">
-            <span>Login</span>
-          </a>
+      {% if session.get('user_id') %}
+      <div style="display: flex; gap: 10px; align-items: center; flex: 1; justify-content: center; max-width: 800px;">
+        <a href="{{ url_for('collab.drafts') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          📝 <span>Drafts</span>
+        </a>
+        <a href="{{ url_for('main.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          📅 <span>Scheduled</span>
+        </a>
+        <a href="{{ url_for('automation.dashboard') }}" class="btn secondary" style="background: #fff; color: #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          ⚡ <span>Automations</span>
+        </a>
+        <a href="{{ url_for('status.workflow_status') }}" class="btn secondary" style="background: #fff; color: #10b981; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          🔄 <span>Workflow</span>
+        </a>
+        <a href="{{ url_for('rag.status') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          🧠 <span>RAG</span>
+        </a>
+        <a href="{{ url_for('settings.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          ⚙️ <span>Settings</span>
+        </a>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="{{ url_for('collab.new_draft') }}" class="btn" style="background: #28a745; color: #fff; padding: 8px 16px;">
+          <span style="font-size: 18px; line-height: 1;">+</span> <span>New Draft</span>
+        </a>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="background: #fff; color: #d63384; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          🛡️ <span>Admin</span>
+        </a>
         {% endif %}
+        <a href="{{ url_for('auth.profile') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          👤 <span>Profile</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="btn danger" style="background: #dc3545; color: #fff; padding: 8px 14px;">
+          🚪 <span>Logout</span>
+        </a>
+      </div>
+      {% else %}
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <a href="{{ url_for('auth.login') }}" class="btn">
+          <span>Login</span>
+        </a>
+      </div>
+      {% endif %}
       </div>
     </div>
   </nav>
