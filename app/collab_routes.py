@@ -154,6 +154,10 @@ def edit_draft(draft_id):
         # Submit for review
         elif action == 'submit_review':
             if draft.is_ready_for_review():
+                if not draft.scheduled_time:
+                    flash('Please set a scheduled time before submitting for review.', 'error')
+                    return redirect(url_for('collab.edit_draft', draft_id=draft_id))
+                    
                 draft.workflow_status = 'review'
                 activity = Activity(
                     draft_id=draft.id,
@@ -164,25 +168,65 @@ def edit_draft(draft_id):
                 db.session.add(activity)
                 flash('Draft submitted for review!', 'success')
             else:
-                flash('All sections must be completed before submitting for review.', 'error')
+                flash('Content and media must be completed before submitting for review.', 'error')
+        
+        # Set scheduled time
+        elif action == 'set_schedule_time':
+            scheduled_time_str = request.form.get('scheduled_time')
+            if scheduled_time_str:
+                try:
+                    scheduled_time = datetime.fromisoformat(scheduled_time_str)
+                    draft.scheduled_time = scheduled_time
+                    
+                    activity = Activity(
+                        draft_id=draft.id,
+                        user_id=current_user.id,
+                        action='set_schedule_time',
+                        description=f'Set scheduled time to {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC'
+                    )
+                    db.session.add(activity)
+                    flash(f'Scheduled time set for {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC', 'success')
+                except ValueError:
+                    flash('Invalid datetime format.', 'error')
+            else:
+                flash('Scheduled time is required.', 'error')
         
         # Approve draft
         elif action == 'approve' and current_user.can_approve():
-            draft.workflow_status = 'approved'
+            if not draft.scheduled_time:
+                flash('Cannot approve: scheduled time is not set.', 'error')
+                return redirect(url_for('collab.edit_draft', draft_id=draft_id))
+            
+            # Create scheduled post immediately
+            post = ScheduledPost(
+                platform=draft.platform,
+                content=draft.content,
+                image_path=draft.image_path,
+                collaboration_tags=draft.collaboration_tags,
+                scheduled_time=draft.scheduled_time
+            )
+            db.session.add(post)
+            db.session.flush()
+            
+            draft.scheduled_post_id = post.id
+            draft.workflow_status = 'scheduled'
             draft.approved_by_id = current_user.id
             draft.approved_at = datetime.utcnow()
             draft.content_status = 'approved'
             draft.media_status = 'approved'
             draft.tags_status = 'approved'
             
+            # Schedule job
+            current_app.schedule_post_job(post.id, draft.scheduled_time)
+            
             activity = Activity(
                 draft_id=draft.id,
                 user_id=current_user.id,
-                action='approved_draft',
-                description='Approved draft for scheduling'
+                action='approved_and_scheduled',
+                description=f'Approved and scheduled for {draft.scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC'
             )
             db.session.add(activity)
-            flash('Draft approved! Ready to schedule.', 'success')
+            flash('Draft approved and scheduled successfully!', 'success')
         
         # Request revision
         elif action == 'request_revision' and current_user.can_approve():
@@ -238,10 +282,12 @@ def edit_draft(draft_id):
 @login_required
 @role_required('admin', 'approver')
 def schedule_draft(draft_id):
+    """Legacy endpoint - scheduling now happens automatically on approval"""
     current_user = get_current_user()
     draft = PostDraft.query.get_or_404(draft_id)
     
-    if draft.workflow_status != 'approved':
+    # This endpoint is now mainly for re-scheduling if needed
+    if draft.workflow_status not in ['approved', 'scheduled']:
         flash('Only approved drafts can be scheduled.', 'error')
         return redirect(url_for('collab.edit_draft', draft_id=draft_id))
     
@@ -256,18 +302,22 @@ def schedule_draft(draft_id):
         flash('Invalid datetime format.', 'error')
         return redirect(url_for('collab.edit_draft', draft_id=draft_id))
     
-    # Create scheduled post
-    post = ScheduledPost(
-        platform=draft.platform,
-        content=draft.content,
-        image_path=draft.image_path,
-        collaboration_tags=draft.collaboration_tags,
-        scheduled_time=scheduled_time
-    )
-    db.session.add(post)
-    db.session.flush()
+    # Update existing scheduled post or create new one
+    if draft.scheduled_post_id:
+        post = ScheduledPost.query.get(draft.scheduled_post_id)
+        post.scheduled_time = scheduled_time
+    else:
+        post = ScheduledPost(
+            platform=draft.platform,
+            content=draft.content,
+            image_path=draft.image_path,
+            collaboration_tags=draft.collaboration_tags,
+            scheduled_time=scheduled_time
+        )
+        db.session.add(post)
+        db.session.flush()
+        draft.scheduled_post_id = post.id
     
-    draft.scheduled_post_id = post.id
     draft.scheduled_time = scheduled_time
     draft.workflow_status = 'scheduled'
     
@@ -277,13 +327,13 @@ def schedule_draft(draft_id):
     activity = Activity(
         draft_id=draft.id,
         user_id=current_user.id,
-        action='scheduled_post',
-        description=f'Scheduled post for {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC'
+        action='rescheduled_post',
+        description=f'Re-scheduled post for {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC'
     )
     db.session.add(activity)
     db.session.commit()
     
-    flash('Post scheduled successfully!', 'success')
+    flash('Post re-scheduled successfully!', 'success')
     return redirect(url_for('main.index'))
 
 @collab_bp.route('/draft/<int:draft_id>/delete', methods=['POST'])
@@ -408,3 +458,125 @@ def get_comments(draft_id):
         'comments': comments_data,
         'count': len(comments_data)
     })
+@collab_bp.route('/api/draft/<int:draft_id>/auto-save', methods=['POST'])
+@login_required
+def auto_save_draft(draft_id):
+    """API endpoint for auto-saving draft content, media, or tags"""
+    current_user = get_current_user()
+    draft = PostDraft.query.get_or_404(draft_id)
+    
+    try:
+        data = request.get_json()
+        section = data.get('section')  # 'content', 'media', 'tags'
+        
+        if section == 'content' and current_user.can_edit_content():
+            content = data.get('content', '').strip()
+            if content:
+                draft.content = content
+                if draft.content_status == 'pending':
+                    draft.content_status = 'completed'
+                    draft.content_completed_at = datetime.utcnow()
+                
+                activity = Activity(
+                    draft_id=draft.id,
+                    user_id=current_user.id,
+                    action='auto_saved_content',
+                    description='Auto-saved content'
+                )
+                db.session.add(activity)
+        
+        elif section == 'tags' and current_user.can_edit_tags():
+            tags = data.get('tags', [])
+            if tags:
+                draft.collaboration_tags = json.dumps(tags)
+                if draft.tags_status == 'pending':
+                    draft.tags_status = 'completed'
+                    draft.tags_completed_at = datetime.utcnow()
+                
+                activity = Activity(
+                    draft_id=draft.id,
+                    user_id=current_user.id,
+                    action='auto_saved_tags',
+                    description='Auto-saved tags'
+                )
+                db.session.add(activity)
+        
+        draft.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{section.capitalize()} auto-saved',
+            'completion': draft.get_completion_percentage()
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f'Auto-save error: {e}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@collab_bp.route('/api/draft/<int:draft_id>/remove-media', methods=['POST'])
+@login_required
+def remove_media(draft_id):
+    """API endpoint to remove a specific media file"""
+    current_user = get_current_user()
+    draft = PostDraft.query.get_or_404(draft_id)
+    
+    if not current_user.can_edit_media():
+        return jsonify({
+            'success': False,
+            'error': 'Permission denied'
+        }), 403
+    
+    try:
+        data = request.get_json()
+        media_index = data.get('index')
+        
+        if draft.image_path:
+            images = json.loads(draft.image_path)
+            if 0 <= media_index < len(images):
+                removed_image = images.pop(media_index)
+                
+                # Try to delete the file from disk
+                try:
+                    if os.path.exists(removed_image):
+                        os.remove(removed_image)
+                except Exception as file_err:
+                    current_app.logger.warning(f'Could not delete file: {file_err}')
+                
+                # Update draft
+                if images:
+                    draft.image_path = json.dumps(images)
+                else:
+                    draft.image_path = None
+                    draft.media_status = 'pending'
+                
+                activity = Activity(
+                    draft_id=draft.id,
+                    user_id=current_user.id,
+                    action='removed_media',
+                    description=f'Removed media file'
+                )
+                db.session.add(activity)
+                draft.updated_at = datetime.utcnow()
+                db.session.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'message': 'Media removed',
+                    'remaining_count': len(images)
+                })
+        
+        return jsonify({
+            'success': False,
+            'error': 'Invalid media index'
+        }), 400
+    
+    except Exception as e:
+        current_app.logger.error(f'Remove media error: {e}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

@@ -342,9 +342,18 @@
                         {{ draft.created_at.strftime('%b %d, %Y') }}
                     </td>
                     <td style="padding: 15px;">
-                        <a href="{{ url_for('collab.edit_draft', draft_id=draft.id) }}" style="padding: 8px 16px; background: #0a66c2; color: white; text-decoration: none; border-radius: 5px; font-size: 13px; font-weight: 600;">
-                            Edit
-                        </a>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="{{ url_for('collab.edit_draft', draft_id=draft.id) }}" style="padding: 8px 16px; background: #0a66c2; color: white; text-decoration: none; border-radius: 5px; font-size: 13px; font-weight: 600;">
+                                Edit
+                            </a>
+                            {% if draft.created_by_id == current_user.id or current_user.can_approve() %}
+                            <form method="POST" action="{{ url_for('collab.delete_draft', draft_id=draft.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this draft? This action cannot be undone.');">
+                                <button type="submit" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                                    Delete
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

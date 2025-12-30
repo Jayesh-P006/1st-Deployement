@@ -133,19 +133,18 @@ class PostDraft(db.Model):
     
     def get_completion_percentage(self):
         completed = 0
-        total = 3
+        total = 2  # Only content and media are required
         if self.content_status == 'completed':
             completed += 1
         if self.media_status == 'completed':
             completed += 1
-        if self.tags_status == 'completed':
-            completed += 1
+        # Tags are optional, don't count towards completion
         return int((completed / total) * 100)
     
     def is_ready_for_review(self):
+        # Only content and media are required, tags are optional
         return (self.content_status == 'completed' and 
-                self.media_status == 'completed' and 
-                self.tags_status == 'completed')
+                self.media_status == 'completed')
     
     def __repr__(self):
         return f'<PostDraft {self.id} {self.title} ({self.workflow_status})>'

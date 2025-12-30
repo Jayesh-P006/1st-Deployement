@@ -267,6 +267,10 @@ body {
     transform: scale(1.05);
 }
 
+.media-item:hover .media-remove-btn {
+    opacity: 1;
+}
+
 .media-item img {
     width: 100%;
     height: 100%;
@@ -283,6 +287,56 @@ body {
     border-radius: 20px;
     font-size: 12px;
     font-weight: 700;
+}
+
+.media-remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(239, 68, 68, 0.95);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.media-remove-btn:hover {
+    background: rgba(220, 38, 38, 0.95);
+}
+
+.auto-save-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.auto-save-indicator.saving {
+    background: #fef3c7;
+    color: #92400e;
+    opacity: 1;
+}
+
+.auto-save-indicator.saved {
+    background: #d1fae5;
+    color: #065f46;
+    opacity: 1;
+}
+
+.auto-save-indicator.error {
+    background: #fee2e2;
+    color: #991b1b;
+    opacity: 1;
 }
 
 .content-editor {
@@ -752,23 +806,24 @@ body {
                             Drop files here or click to browse
                         </p>
                         <p style="margin: 0; color: #9ca3af; font-size: 13px;">
-                            Supports: JPG, PNG, GIF, MP4 • Max 10 files
+                            Supports: JPG, PNG, GIF, MP4 • Max 10 files • Auto-uploads
                         </p>
                         <input type="file" name="image" accept="image/*,video/*" multiple id="fileInput" style="display: none;">
                     </div>
-                    <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">
-                        📤 Upload Media
-                    </button>
+                    <div id="mediaAutoSaveIndicator" class="auto-save-indicator" style="margin-top: 10px;"></div>
                 </form>
                 {% endif %}
 
                 {% if draft.image_path %}
                 {% set images = draft.image_path|from_json %}
-                <div class="media-grid">
+                <div class="media-grid" id="mediaGrid">
                     {% for img in images %}
-                    <div class="media-item">
+                    <div class="media-item" data-index="{{ loop.index0 }}">
                         <img src="{{ url_for('main.uploaded_file', filename=img.split('/')[-1]) }}" alt="Media {{ loop.index }}">
                         <div class="media-badge">{{ loop.index }}</div>
+                        {% if current_user.can_edit_media() and draft.workflow_status in ['draft', 'review'] %}
+                        <button class="media-remove-btn" onclick="removeMediaItem({{ loop.index0 }})">✕ Remove</button>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
@@ -803,23 +858,21 @@ body {
                 </button>
                 {% endif %}
 
-                <form method="POST" id="contentForm">
-                    <input type="hidden" name="action" value="update_content">
+                <div>
                     <div class="content-editor">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div id="contentAutoSaveIndicator" class="auto-save-indicator"></div>
+                        </div>
                         <textarea 
-                            name="content" 
                             id="contentTextarea"
-                            placeholder="Write your amazing caption here... or use AI to generate one!"
+                            placeholder="Write your amazing caption here... or use AI to generate one! (auto-saves as you type)"
                             maxlength="2200"
                         >{{ draft.content or '' }}</textarea>
                         <div class="char-counter">
                             <span id="charCount">{{ draft.content|length if draft.content else 0 }}</span> / 2200
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary" style="margin-top: 15px; width: 100%;">
-                        💾 Save Content
-                    </button>
-                </form>
+                </div>
                 {% else %}
                 <div style="padding: 20px; background: #f9fafb; border-radius: 12px; color: #4b5563; white-space: pre-wrap; line-height: 1.6;">
                     {{ draft.content or 'No content yet' }}
@@ -841,10 +894,10 @@ body {
                 </div>
 
                 {% if current_user.can_edit_tags() and draft.workflow_status in ['draft', 'review'] %}
-                <form method="POST" id="tagsForm">
-                    <input type="hidden" name="action" value="update_tags">
-                    <input type="hidden" name="collaboration_tags" id="tagsHiddenInput" value="{% if draft.collaboration_tags %}{{ draft.collaboration_tags|from_json|join(',') }}{% endif %}">
-                    
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div id="tagsAutoSaveIndicator" class="auto-save-indicator"></div>
+                    </div>
                     <div class="tag-input-container" id="tagContainer">
                         {% if draft.collaboration_tags %}
                         {% set tags = draft.collaboration_tags|from_json %}
@@ -859,16 +912,13 @@ body {
                             type="text" 
                             class="tag-input" 
                             id="tagInput"
-                            placeholder="Type @ and press Enter..."
+                            placeholder="Type @ and press Enter... (auto-saves)"
                         >
                     </div>
-                    <p style="font-size: 12px; color: #9ca3af; margin: 10px 0 15px 0;">
+                    <p style="font-size: 12px; color: #9ca3af; margin: 10px 0 0 0;">
                         💡 Example: @brandname, @sponsor, @partner
                     </p>
-                    <button type="submit" class="btn-primary" style="width: 100%;">
-                        🏷️ Save Mentions
-                    </button>
-                </form>
+                </div>
                 {% else %}
                 <div style="padding: 20px; background: #f9fafb; border-radius: 12px;">
                     {% if draft.collaboration_tags %}
@@ -885,19 +935,75 @@ body {
                 {% endif %}
             </div>
 
+            <!-- Step 4: Set Scheduled Time -->
+            {% if draft.workflow_status == 'draft' %}
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number step-1" style="background: var(--info);">4</div>
+                    <div class="step-title">
+                        <h3>Schedule Time</h3>
+                        <p>Set when this post should be published (UTC timezone)</p>
+                    </div>
+                    <span class="step-status {% if draft.scheduled_time %}status-completed{% else %}status-pending{% endif %}">
+                        {{ 'SET' if draft.scheduled_time else 'PENDING' }}
+                    </span>
+                </div>
+
+                <form method="POST" id="scheduleTimeForm">
+                    <input type="hidden" name="action" value="set_schedule_time">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #4b5563;">
+                        📅 Schedule Time (UTC)
+                    </label>
+                    <input 
+                        type="datetime-local" 
+                        name="scheduled_time" 
+                        id="scheduledTimeInput"
+                        value="{% if draft.scheduled_time %}{{ draft.scheduled_time.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                        required 
+                        style="width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 10px; margin-bottom: 15px; font-size: 15px;"
+                    >
+                    {% if draft.scheduled_time %}
+                    <p style="font-size: 13px; color: #10b981; margin: -10px 0 15px 0;">
+                        ✓ Currently set for: {{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') }}
+                    </p>
+                    {% endif %}
+                    <button type="submit" class="btn-primary" style="width: 100%; background: var(--info);">
+                        🕐 Set Schedule Time
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
             <!-- Action Buttons -->
             {% if draft.workflow_status == 'draft' and draft.is_ready_for_review() %}
-            <div class="alert alert-success">
-                <div class="alert-icon">✅</div>
+            <div class="alert {% if draft.scheduled_time %}alert-success{% else %}alert-warning{% endif %}">
+                <div class="alert-icon">{% if draft.scheduled_time %}✅{% else %}⚠️{% endif %}</div>
                 <div style="flex: 1;">
+                    {% if draft.scheduled_time %}
                     <strong>All Sections Complete!</strong>
-                    <p style="margin: 4px 0 12px 0; font-size: 13px;">This draft is ready to be submitted for approval.</p>
+                    <p style="margin: 4px 0 12px 0; font-size: 13px;">This draft is ready to be submitted for approval. It will be scheduled for {{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') }} after approval.</p>
                     <form method="POST" style="display: inline;">
                         <input type="hidden" name="action" value="submit_review">
                         <button type="submit" class="btn-primary">
                             🚀 Submit for Review
                         </button>
                     </form>
+                    {% else %}
+                    <strong>Schedule Time Required</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px;">Please set a scheduled time before submitting for review.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if draft.workflow_status == 'review' %}
+            <div class="alert alert-info">
+                <div class="alert-icon">📅</div>
+                <div>
+                    <strong>Scheduled For:</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 600; color: #1a202c;">
+                        {{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') if draft.scheduled_time else 'Not set' }}
+                    </p>
                 </div>
             </div>
             {% endif %}
@@ -905,11 +1011,14 @@ body {
             {% if draft.workflow_status == 'review' and current_user.can_approve() %}
             <div class="step-card" style="border: 2px solid var(--success);">
                 <h3 style="margin: 0 0 20px 0; color: #1a202c; font-size: 20px;">Review & Approve</h3>
+                <p style="margin: 0 0 15px 0; color: #4b5563;">
+                    📅 Will be scheduled for: <strong>{{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') if draft.scheduled_time else 'Not set' }}</strong>
+                </p>
                 <div class="action-buttons">
                     <form method="POST" style="display: inline;">
                         <input type="hidden" name="action" value="approve">
                         <button type="submit" class="btn-primary" style="background: var(--success);">
-                            ✓ Approve Draft
+                            ✓ Approve & Schedule
                         </button>
                     </form>
                     <button type="button" onclick="document.getElementById('revisionForm').style.display='block'" class="btn-secondary" style="border-color: var(--danger); color: var(--danger);">
@@ -926,21 +1035,15 @@ body {
             </div>
             {% endif %}
 
-            {% if draft.workflow_status == 'approved' and current_user.can_schedule() %}
-            <div class="step-card" style="border: 2px solid var(--success);">
-                <h3 style="margin: 0 0 20px 0; color: var(--success); font-size: 20px;">📅 Schedule Approved Post</h3>
-                <form method="POST" action="{{ url_for('collab.schedule_draft', draft_id=draft.id) }}">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #4b5563;">Schedule Time (UTC)</label>
-                    <input 
-                        type="datetime-local" 
-                        name="scheduled_time" 
-                        required 
-                        style="width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 10px; margin-bottom: 15px; font-size: 15px;"
-                    >
-                    <button type="submit" class="btn-primary" style="width: 100%; background: var(--success);">
-                        🚀 Schedule Post
-                    </button>
-                </form>
+            {% if draft.workflow_status == 'approved' %}
+            <div class="alert alert-success">
+                <div class="alert-icon">✅</div>
+                <div>
+                    <strong>Draft Approved!</strong>
+                    <p style="margin: 4px 0 0 0; font-size: 13px;">
+                        Post has been scheduled for {{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') if draft.scheduled_time else 'publishing' }}.
+                    </p>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -1003,6 +1106,13 @@ const fileInput = document.getElementById('fileInput');
 if (uploadZone && fileInput) {
     uploadZone.addEventListener('click', () => fileInput.click());
     
+    // Auto-upload on file selection
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            document.getElementById('mediaUploadForm').submit();
+        }
+    });
+    
     uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadZone.classList.add('drag-over');
@@ -1020,14 +1130,91 @@ if (uploadZone && fileInput) {
     });
 }
 
-// Character counter
+// Auto-save for content
 const contentTextarea = document.getElementById('contentTextarea');
 const charCount = document.getElementById('charCount');
+let contentSaveTimeout = null;
 
 if (contentTextarea && charCount) {
     contentTextarea.addEventListener('input', () => {
         charCount.textContent = contentTextarea.value.length;
+        
+        // Auto-save after 2 seconds of no typing
+        clearTimeout(contentSaveTimeout);
+        showAutoSaveIndicator('contentAutoSaveIndicator', 'saving', 'Saving...');
+        
+        contentSaveTimeout = setTimeout(async () => {
+            await autoSaveContent(contentTextarea.value);
+        }, 2000);
     });
+}
+
+async function autoSaveContent(content) {
+    try {
+        const response = await fetch('{{ url_for("collab.auto_save_draft", draft_id=draft.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                section: 'content',
+                content: content
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAutoSaveIndicator('contentAutoSaveIndicator', 'saved', '✓ Saved');
+            setTimeout(() => hideAutoSaveIndicator('contentAutoSaveIndicator'), 2000);
+        } else {
+            showAutoSaveIndicator('contentAutoSaveIndicator', 'error', '✗ Save failed');
+        }
+    } catch (error) {
+        showAutoSaveIndicator('contentAutoSaveIndicator', 'error', '✗ Save failed');
+    }
+}
+
+// Media removal
+async function removeMediaItem(index) {
+    if (!confirm('Remove this media file?')) return;
+    
+    try {
+        const response = await fetch('{{ url_for("collab.remove_media", draft_id=draft.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ index: index })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Reload page to update media grid
+            location.reload();
+        } else {
+            showNotification('Failed to remove media: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showNotification('Error removing media: ' + error.message, 'error');
+    }
+}
+
+function showAutoSaveIndicator(id, status, text) {
+    const indicator = document.getElementById(id);
+    if (indicator) {
+        indicator.className = `auto-save-indicator ${status}`;
+        indicator.textContent = text;
+    }
+}
+
+function hideAutoSaveIndicator(id) {
+    const indicator = document.getElementById(id);
+    if (indicator) {
+        indicator.className = 'auto-save-indicator';
+        indicator.textContent = '';
+    }
 }
 
 // AI Caption Generation
@@ -1070,10 +1257,10 @@ if (generateBtn) {
     });
 }
 
-// Tag input functionality
+// Tag input functionality with auto-save
 const tagContainer = document.getElementById('tagContainer');
 const tagInput = document.getElementById('tagInput');
-const tagsHiddenInput = document.getElementById('tagsHiddenInput');
+let tagSaveTimeout = null;
 
 if (tagInput) {
     tagInput.addEventListener('keydown', (e) => {
@@ -1104,17 +1291,42 @@ function addTag(tagText) {
     tagEl.innerHTML = `${tagText}<span class="tag-remove" onclick="removeTag(this)">×</span>`;
     
     tagContainer.insertBefore(tagEl, tagInput);
-    updateTagsInput();
+    autoSaveTags();
 }
 
 function removeTag(element) {
     element.parentElement.remove();
-    updateTagsInput();
+    autoSaveTags();
 }
 
-function updateTagsInput() {
+async function autoSaveTags() {
     const tags = Array.from(document.querySelectorAll('.tag-item')).map(el => el.dataset.tag);
-    tagsHiddenInput.value = tags.join(',');
+    
+    showAutoSaveIndicator('tagsAutoSaveIndicator', 'saving', 'Saving...');
+    
+    try {
+        const response = await fetch('{{ url_for("collab.auto_save_draft", draft_id=draft.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                section: 'tags',
+                tags: tags
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAutoSaveIndicator('tagsAutoSaveIndicator', 'saved', '✓ Saved');
+            setTimeout(() => hideAutoSaveIndicator('tagsAutoSaveIndicator'), 2000);
+        } else {
+            showAutoSaveIndicator('tagsAutoSaveIndicator', 'error', '✗ Save failed');
+        }
+    } catch (error) {
+        showAutoSaveIndicator('tagsAutoSaveIndicator', 'error', '✗ Save failed');
+    }
 }
 
 // Real-time comment updates (every 3 seconds)
