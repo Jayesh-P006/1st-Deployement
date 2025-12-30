@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Automation Logs{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 30px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-size: 32px; font-weight: 700; margin: 0;">📊 Automation Logs</h1>
+        <a href="{{ url_for('automation.dashboard') }}" style="padding: 10px 20px; background: white; color: #6b7280; border: 2px solid #e5e7eb; border-radius: 10px; text-decoration: none; font-weight: 600;">
+            ← Back
+        </a>
+    </div>
+
+    <div style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); margin-bottom: 20px;">
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <a href="?type=all" style="padding: 8px 16px; {{ 'background: #8b5cf6; color: white;' if automation_type == 'all' else 'background: #f3f4f6; color: #6b7280;' }} border-radius: 8px; text-decoration: none; font-weight: 600;">All</a>
+            <a href="?type=auto_comment_reply" style="padding: 8px 16px; {{ 'background: #10b981; color: white;' if automation_type == 'auto_comment_reply' else 'background: #f3f4f6; color: #6b7280;' }} border-radius: 8px; text-decoration: none; font-weight: 600;">Comment Replies</a>
+            <a href="?type=comment_to_dm" style="padding: 8px 16px; {{ 'background: #8b5cf6; color: white;' if automation_type == 'comment_to_dm' else 'background: #f3f4f6; color: #6b7280;' }} border-radius: 8px; text-decoration: none; font-weight: 600;">Triggered DMs</a>
+            <a href="?type=dm_auto_reply" style="padding: 8px 16px; {{ 'background: #3b82f6; color: white;' if automation_type == 'dm_auto_reply' else 'background: #f3f4f6; color: #6b7280;' }} border-radius: 8px; text-decoration: none; font-weight: 600;">DM Auto-Replies</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div style="padding: 20px; background: #f9fafb; border-radius: 12px;">
+                <p style="margin: 0; font-size: 14px; color: #6b7280;">Total Logs</p>
+                <p style="margin: 8px 0 0 0; font-size: 32px; font-weight: 700; color: #1f2937;">{{ total_logs }}</p>
+            </div>
+            <div style="padding: 20px; background: #f9fafb; border-radius: 12px;">
+                <p style="margin: 0; font-size: 14px; color: #6b7280;">Success Rate</p>
+                <p style="margin: 8px 0 0 0; font-size: 32px; font-weight: 700; color: #10b981;">{{ success_rate }}%</p>
+            </div>
+        </div>
+
+        {% if logs.items %}
+            {% for log in logs.items %}
+            <div style="padding: 15px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                            <span style="padding: 4px 10px; background: {{ '#d1fae5' if log.success else '#fee2e2' }}; color: {{ '#065f46' if log.success else '#991b1b' }}; border-radius: 10px; font-size: 12px; font-weight: 700;">
+                                {{ 'Success' if log.success else 'Failed' }}
+                            </span>
+                            <span style="padding: 4px 10px; background: #dbeafe; color: #1e40af; border-radius: 10px; font-size: 12px; font-weight: 700;">
+                                {{ log.automation_type }}
+                            </span>
+                        </div>
+                        <p style="margin: 0 0 5px 0; color: #1f2937;"><strong>Action:</strong> {{ log.action_taken or 'N/A' }}</p>
+                        {% if log.response_text %}
+                        <p style="margin: 0 0 5px 0; color: #6b7280; font-size: 14px;">
+                            <strong>Response:</strong> {{ log.response_text[:150] }}{% if log.response_text|length > 150 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                        {% if log.error_message %}
+                        <p style="margin: 0; color: #dc2626; font-size: 13px;">
+                            <strong>Error:</strong> {{ log.error_message }}
+                        </p>
+                        {% endif %}
+                        {% if log.response_time_ms %}
+                        <p style="margin: 5px 0 0 0; color: #9ca3af; font-size: 12px;">
+                            ⏱️ {{ log.response_time_ms }}ms
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: right; color: #9ca3af; font-size: 12px;">
+                        {{ log.created_at.strftime('%b %d, %H:%M:%S') }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if logs.has_prev or logs.has_next %}
+            <div style="margin-top: 30px; text-align: center;">
+                {% if logs.has_prev %}
+                <a href="?page={{ logs.prev_num }}&type={{ automation_type }}" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 0 5px;">← Previous</a>
+                {% endif %}
+                <span style="padding: 10px 20px; color: #6b7280;">Page {{ logs.page }} of {{ logs.pages }}</span>
+                {% if logs.has_next %}
+                <a href="?page={{ logs.next_num }}&type={{ automation_type }}" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 0 5px;">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% else %}
+            <p style="text-align: center; color: #9ca3af; padding: 40px 0;">
+                No logs yet. Automation activity will appear here.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

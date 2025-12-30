@@ -300,3 +300,79 @@ class DMMessage(db.Model):
     
     def __repr__(self):
         return f'<DMMessage {self.sender_type} at {self.created_at}>'
+# ============= AUTOMATION SUITE MODELS =============
+
+class AutoReplySettings(db.Model):
+    """Settings for auto-reply to comments on posts"""
+    __tablename__ = 'auto_reply_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    platform = db.Column(db.String(32), nullable=False, default='instagram')  # instagram|linkedin
+    is_active = db.Column(db.Boolean, default=False)
+    tone = db.Column(db.String(50), default='friendly')  # friendly|professional|casual|enthusiastic
+    delay_seconds = db.Column(db.Integer, default=30)  # Delay before replying (humanize)
+    use_rag = db.Column(db.Boolean, default=True)  # Use RAG system for context-aware replies
+    fallback_message = db.Column(db.Text, default='Thanks for your comment! 🙏')
+    max_replies_per_hour = db.Column(db.Integer, default=20)
+    ignore_keywords = db.Column(db.Text)  # JSON array of keywords to ignore (spam filter)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<AutoReplySettings {self.platform} active={self.is_active}>'
+
+class CommentTrigger(db.Model):
+    """Keyword triggers for Comment-to-DM automation (Viral Growth Tool)"""
+    __tablename__ = 'comment_trigger'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    keyword = db.Column(db.String(100), nullable=False, unique=True)  # e.g., "GUIDE", "LINK"
+    dm_response = db.Column(db.Text, nullable=False)  # Static message to send
+    use_rag = db.Column(db.Boolean, default=False)  # Generate dynamic response using RAG
+    is_active = db.Column(db.Boolean, default=True)
+    platform = db.Column(db.String(32), default='instagram')  # instagram|linkedin
+    times_triggered = db.Column(db.Integer, default=0)  # Analytics counter
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<CommentTrigger "{self.keyword}" active={self.is_active}>'
+
+class AutomationLog(db.Model):
+    """Log all automation actions for debugging and analytics"""
+    __tablename__ = 'automation_log'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    automation_type = db.Column(db.String(50), nullable=False)  # 'auto_comment_reply'|'comment_to_dm'|'dm_auto_reply'
+    platform = db.Column(db.String(32), default='instagram')
+    trigger_data = db.Column(db.Text)  # JSON: comment text, user, post info
+    action_taken = db.Column(db.String(100))  # 'replied_to_comment'|'sent_dm'|'skipped'
+    success = db.Column(db.Boolean, default=True)
+    error_message = db.Column(db.Text)
+    response_text = db.Column(db.Text)  # The actual reply/DM sent
+    response_time_ms = db.Column(db.Integer)  # How long it took to process
+    user_id = db.Column(db.String(100))  # Instagram/LinkedIn user ID
+    post_id = db.Column(db.String(100))  # Post/Media ID
+    comment_id = db.Column(db.String(100))  # Comment ID (if applicable)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<AutomationLog {self.automation_type} success={self.success}>'
+
+class CommentDMTracker(db.Model):
+    """Track DMs sent for specific post+user combinations to prevent spam"""
+    __tablename__ = 'comment_dm_tracker'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.String(100), nullable=False)
+    trigger_keyword = db.Column(db.String(100))
+    dm_sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Unique constraint: one DM per user per post
+    __table_args__ = (
+        db.UniqueConstraint('post_id', 'user_id', name='unique_post_user_dm'),
+    )
+    
+    def __repr__(self):
+        return f'<CommentDMTracker post={self.post_id} user={self.user_id}>'

@@ -457,6 +457,48 @@ def handle_webhook_event(event_data):
                     results.append(result)
                 except Exception as e:
                     current_app.logger.error(f"Error processing extracted event from {ev.get('source')}: {e}")
+            
+            # NEW: Handle comment events for automation
+            changes = entry.get('changes', [])
+            for change in changes:
+                field = change.get('field')
+                value = change.get('value', {})
+                
+                # Instagram comment webhook
+                if field == 'comments':
+                    try:
+                        from ..automation_handlers import handle_comment_event
+                        
+                        comment_data = {
+                            'id': value.get('id'),
+                            'text': value.get('text', ''),
+                            'from': value.get('from', {})
+                        }
+                        
+                        # Get post data
+                        media_id = value.get('media', {}).get('id') if isinstance(value.get('media'), dict) else value.get('media')
+                        post_data = {
+                            'id': media_id,
+                            'caption': '',  # Could fetch this from API if needed
+                            'permalink': ''
+                        }
+                        
+                        # Process comment automation
+                        automation_result = handle_comment_event(comment_data, post_data)
+                        current_app.logger.info(f'Comment automation processed: {automation_result}')
+                        
+                        results.append({
+                            'type': 'comment',
+                            'comment_id': comment_data['id'],
+                            'automation': automation_result
+                        })
+                    except Exception as comment_err:
+                        current_app.logger.error(f'Comment automation error: {comment_err}')
+                        results.append({
+                            'type': 'comment',
+                            'status': 'error',
+                            'error': str(comment_err)
+                        })
 
         if not results:
             current_app.logger.info('No processable messaging events found in webhook payload')
