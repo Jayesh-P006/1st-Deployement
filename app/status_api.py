@@ -2,7 +2,7 @@
 Flask route to serve System Status Monitor data
 Add this to app/routes.py or create app/status_routes.py
 """
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, render_template, current_app
 from datetime import datetime
 from .auth import login_required
 
@@ -119,5 +119,44 @@ def get_system_status():
             }
         })
     
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@status_bp.route('/api/config-check', methods=['GET'])
+def config_check():
+    """Basic configuration check useful after deployment."""
+    try:
+        from .models import ScheduledPost
+        public_url = current_app.config.get('PUBLIC_URL', '')
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', '')
+        is_https = public_url.lower().startswith('https://') if public_url else False
+        is_local = ('127.0.0.1' in public_url) or ('localhost' in public_url) if public_url else True
+        insta_token = bool(current_app.config.get('INSTAGRAM_ACCESS_TOKEN'))
+        insta_bid = bool(current_app.config.get('INSTAGRAM_BUSINESS_ACCOUNT_ID'))
+
+        # Provide an example upload URL if a scheduled post has images
+        example_upload_url = None
+        try:
+            last_with_image = ScheduledPost.query.filter(ScheduledPost.image_path.isnot(None)).order_by(ScheduledPost.created_at.desc()).first()
+            if last_with_image and last_with_image.image_path:
+                import json, os
+                try:
+                    paths = json.loads(last_with_image.image_path) if last_with_image.image_path.startswith('[') else [last_with_image.image_path]
+                except Exception:
+                    paths = [last_with_image.image_path]
+                if paths:
+                    filename = os.path.basename(paths[0])
+                    example_upload_url = f"{public_url}/uploads/{filename}" if public_url else None
+        except Exception:
+            example_upload_url = None
+
+        return jsonify({
+            'public_url': public_url,
+            'is_https': is_https,
+            'is_local': is_local,
+            'upload_folder': upload_folder,
+            'instagram_configured': insta_token and insta_bid,
+            'example_upload_url': example_upload_url
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

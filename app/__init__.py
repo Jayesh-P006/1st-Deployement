@@ -171,4 +171,29 @@ def create_app():
 
     app.schedule_post_job = lambda post_id, run_date: sched.add_job(execute_post, 'date', run_date=run_date, args=[post_id], id=f'post_{post_id}', replace_existing=True)
 
+    # Startup validation and helpful warnings
+    try:
+        public_url = app.config.get('PUBLIC_URL', '')
+        if public_url:
+            is_https = public_url.lower().startswith('https://')
+            is_local = ('127.0.0.1' in public_url) or ('localhost' in public_url)
+            if not is_https:
+                print("[WARN] PUBLIC_URL is not HTTPS. Instagram requires HTTPS for image_url.")
+            if is_local:
+                print("[WARN] PUBLIC_URL points to localhost. Instagram cannot fetch local URLs. Set PUBLIC_URL or RAILWAY_PUBLIC_DOMAIN to your deployed domain.")
+        else:
+            print("[WARN] PUBLIC_URL is empty. Set PUBLIC_URL or RAILWAY_PUBLIC_DOMAIN in environment.")
+
+        # Ensure uploads folder exists
+        try:
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        except Exception as e:
+            print(f"[WARN] Could not create uploads folder: {e}")
+
+        # Check Instagram credentials presence
+        if not app.config.get('INSTAGRAM_ACCESS_TOKEN') or not app.config.get('INSTAGRAM_BUSINESS_ACCOUNT_ID'):
+            print("[WARN] Instagram credentials missing. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.")
+    except Exception as _:
+        pass
+
     return app
