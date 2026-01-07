@@ -4,6 +4,7 @@ import os
 from . import db
 from .models import ScheduledPost, TokenUsage
 from .auth import login_required
+from .utils import download_image_to_uploads
 
 # In-process cache for account status to avoid repeated Meta API calls.
 # This resets on deploy/restart (which is fine for status checks).
@@ -108,6 +109,7 @@ def new_post():
         content = request.form.get('content', '').strip()
         scheduled_time_str = request.form.get('scheduled_time')
         image = request.files.get('image')
+        image_url = request.form.get('image_url', '').strip()
 
         if platform != 'instagram':
             flash('Only Instagram platform is supported.', 'error')
@@ -139,6 +141,12 @@ def new_post():
                     full_path = os.path.join(upload_folder, filename)
                     img.save(full_path)
                     image_paths.append(full_path)
+        # Optional: add image from URL (testing convenience)
+        if image_url:
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            saved = download_image_to_uploads(image_url, upload_folder)
+            if saved:
+                image_paths.append(saved)
         
         import json
         image_path_json = json.dumps(image_paths) if image_paths else None
@@ -171,6 +179,7 @@ def edit_post(post_id):
         content = request.form.get('content', '').strip()
         scheduled_time_str = request.form.get('scheduled_time')
         image = request.files.get('image')
+        image_url = request.form.get('image_url', '').strip()
 
         if platform != 'instagram':
             flash('Only Instagram platform is supported.', 'error')
@@ -211,6 +220,19 @@ def edit_post(post_id):
                     image_paths.append(full_path)
             if image_paths:
                 post.image_path = json.dumps(image_paths)
+        # Optional: add/replace image via URL
+        if image_url:
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            saved = download_image_to_uploads(image_url, upload_folder)
+            if saved:
+                import json
+                # If existing images, append; otherwise create list
+                try:
+                    existing = json.loads(post.image_path) if post.image_path and post.image_path.startswith('[') else ([post.image_path] if post.image_path else [])
+                except Exception:
+                    existing = []
+                existing.append(saved)
+                post.image_path = json.dumps(existing)
 
         db.session.commit()
 

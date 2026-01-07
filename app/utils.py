@@ -1,6 +1,16 @@
 """
-Helper function to convert Google Drive links to direct download URLs
+Helper utilities for media URLs and downloads.
+
+- convert_to_direct_url: Converts sharing links to direct download URLs
+- download_image_to_uploads: Downloads an image URL into the uploads folder
 """
+
+import os
+import mimetypes
+from datetime import datetime
+from typing import Optional
+
+import requests
 
 def convert_to_direct_url(url):
     """
@@ -36,6 +46,51 @@ def convert_to_direct_url(url):
     # Already a direct URL
     else:
         return url
+
+
+def download_image_to_uploads(image_url: str, upload_folder: str) -> Optional[str]:
+    """
+    Download an image from a URL into the upload folder and return the full path.
+
+    - Converts common share URLs (Drive/Dropbox/OneDrive) to direct links
+    - Validates that the response looks like an image
+    - Picks a reasonable file extension
+    """
+    if not image_url:
+        return None
+
+    os.makedirs(upload_folder, exist_ok=True)
+
+    direct_url = convert_to_direct_url(image_url.strip())
+    try:
+        resp = requests.get(direct_url, timeout=15, stream=True)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    content_type = resp.headers.get('Content-Type', '')
+    if not content_type.startswith('image/'):
+        return None
+
+    # Determine extension from content-type or URL
+    ext = mimetypes.guess_extension(content_type.split(';')[0].strip()) or ''
+    if not ext:
+        # Try from URL path
+        guessed = os.path.splitext(direct_url.split('?')[0])[1]
+        ext = guessed if guessed else '.jpg'
+
+    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_') + 'remote' + ext
+    full_path = os.path.join(upload_folder, filename)
+
+    try:
+        with open(full_path, 'wb') as f:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+    except Exception:
+        return None
+
+    return full_path
 
 
 if __name__ == '__main__':

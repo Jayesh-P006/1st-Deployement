@@ -6,6 +6,7 @@ from . import db
 from .models import PostDraft, User, Comment, Activity, ScheduledPost, TokenUsage
 from .auth import login_required, role_required, get_current_user
 from .ai.vision_service import analyze_image_for_caption, analyze_multiple_images
+from .utils import download_image_to_uploads
 
 collab_bp = Blueprint('collab', __name__, url_prefix='/collab')
 
@@ -105,8 +106,10 @@ def edit_draft(draft_id):
         # Media update (Production team)
         elif action == 'update_media' and current_user.can_edit_media():
             images = request.files.getlist('image')
+            image_url = request.form.get('image_url', '').strip()
+
+            new_paths = []
             if images and any(img.filename for img in images):
-                image_paths = []
                 upload_folder = current_app.config['UPLOAD_FOLDER']
                 os.makedirs(upload_folder, exist_ok=True)
                 for img in images:
@@ -114,22 +117,37 @@ def edit_draft(draft_id):
                         filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_') + img.filename.replace(' ', '_')
                         full_path = os.path.join(upload_folder, filename)
                         img.save(full_path)
-                        image_paths.append(full_path)
-                
-                if image_paths:
-                    draft.image_path = json.dumps(image_paths)
-                    if draft.media_status == 'pending':
-                        draft.media_status = 'completed'
-                        draft.media_completed_at = datetime.utcnow()
-                    
-                    activity = Activity(
-                        draft_id=draft.id,
-                        user_id=current_user.id,
-                        action='uploaded_media',
-                        description=f'Uploaded {len(image_paths)} image(s)'
-                    )
-                    db.session.add(activity)
-                    flash('Media uploaded successfully!', 'success')
+                        new_paths.append(full_path)
+
+            # Optional: add image from URL
+            if image_url:
+                upload_folder = current_app.config['UPLOAD_FOLDER']
+                saved = download_image_to_uploads(image_url, upload_folder)
+                if saved:
+                    new_paths.append(saved)
+
+            if new_paths:
+                # Merge with existing images if present
+                existing = []
+                if draft.image_path:
+                    try:
+                        existing = json.loads(draft.image_path) if draft.image_path.startswith('[') else [draft.image_path]
+                    except Exception:
+                        existing = []
+                all_paths = existing + new_paths
+                draft.image_path = json.dumps(all_paths)
+                if draft.media_status == 'pending':
+                    draft.media_status = 'completed'
+                    draft.media_completed_at = datetime.utcnow()
+
+                activity = Activity(
+                    draft_id=draft.id,
+                    user_id=current_user.id,
+                    action='uploaded_media',
+                    description=f'Uploaded {len(new_paths)} image(s)'
+                )
+                db.session.add(activity)
+                flash('Media added successfully!', 'success')
         
         # Tags update (PR & Sponsorship team)
         elif action == 'update_tags' and current_user.can_edit_tags():
