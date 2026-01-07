@@ -211,7 +211,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
     from ..models import DMConversation, DMMessage
     from ..ai.rag_chat import generate_dm_response
     
-    current_app.logger.info(f'Processing message from {sender_id}: {message_text[:50]}...')
+    current_app.logger.info(f'🔥 PROCESSING MESSAGE - Sender: {sender_id}, Text: {message_text[:100]}')
     
     try:
         # Find or create conversation
@@ -219,6 +219,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
         
         if not conversation:
             # New conversation - get username
+            current_app.logger.info(f'📝 Creating NEW conversation for {sender_id}')
             username = get_instagram_username(sender_id)
             conversation = DMConversation(
                 instagram_user_id=sender_id,
@@ -229,20 +230,51 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
             )
             db.session.add(conversation)
             db.session.flush()  # Get ID
+            current_app.logger.info(f'✅ Created conversation ID: {conversation.id}')
+        else:
+            current_app.logger.info(f'♻️ Existing conversation ID: {conversation.id}')
         
         # Normalize message id to fit DB constraint
         message_id = _normalize_message_id(message_id, sender_id=sender_id, timestamp=timestamp)
+        current_app.logger.info(f'📬 Normalized message_id: {message_id}')
 
-        # Skip duplicates if already stored
-        if DMMessage.query.filter_by(instagram_message_id=message_id).first():
-            current_app.logger.info(f"Skip duplicate message_id={message_id}")
+        # Check for duplicates - but also check if it's within the same conversation AND same text
+        # This prevents Instagram from sending duplicate webhook events
+        existing_msg = DMMessage.query.filter_by(
+            conversation_id=conversation.id,
+            instagram_message_id=message_id
+        ).first()
+        
+        if existing_msg:
+            current_app.logger.info(f"⏭️ Skip duplicate message_id={message_id} in conversation {conversation.id}")
             return {
                 'success': True,
                 'replied': False,
                 'reason': 'duplicate_message',
             }
+        
+        # Additional check: Skip if same text was just sent in last 10 seconds (Instagram webhook duplication bug)
+        from sqlalchemy import and_
+        recent_cutoff = datetime.utcnow() - timedelta(seconds=10)
+        recent_duplicate = DMMessage.query.filter(
+            and_(
+                DMMessage.conversation_id == conversation.id,
+                DMMessage.message_text == message_text,
+                DMMessage.sender_type == 'user',
+                DMMessage.created_at >= recent_cutoff
+            )
+        ).first()
+        
+        if recent_duplicate:
+            current_app.logger.info(f"⏭️ Skip recent duplicate text within 10s: '{message_text[:30]}'")
+            return {
+                'success': True,
+                'replied': False,
+                'reason': 'recent_duplicate_text',
+            }
 
         # Save incoming message
+        current_app.logger.info(f'💾 Saving incoming message to DB...')
         incoming_msg = DMMessage(
             conversation_id=conversation.id,
             instagram_message_id=message_id,
@@ -262,6 +294,7 @@ def process_instagram_message(sender_id, message_id, message_text, timestamp):
             pass  # Column doesn't exist yet
         
         db.session.commit()
+        current_app.logger.info(f'✅ Message saved! Conversation now has {conversation.message_count} messages')
         
         # Check if we should auto-reply using ChatSettings
         from ..models import ChatSettings
