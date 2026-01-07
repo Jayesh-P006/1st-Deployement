@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing page</title>
+    <style>
+         * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    body {
+      width: 100%;
+      overflow-x: hidden;
+      background-color:  #be6482;
+    }
+
+    .mainbackground {
+      background-color: #b4cadf;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      height: 100px;
+      width: 100%;
+      
+      margin: 0 auto;
+    background: linear-gradient(
+    135deg,
+    #1e1b4b,
+    #312e81,
+    #4c1d95
+  );
+
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+     border-radius: 5px;
+    animation: slideDown 1.4s ease-out forwards;
+    }
+    @keyframes slideDown {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .img {
+      height: 10rem;
+      width: 10rem;
+      object-fit: contain;
+    
+    }
+
+    .name {
+      font-size: 36px;
+      font-weight: bolder;
+
+       color: #ffffff;
+      -webkit-text-stroke: 1px black;
+      font: bolder;
+      font-weight: bolder;
+      font-style: italic;
+    }
+        
+   
+
+    
+    .main-section{
+      max-width: 1500px;
+      display: flex;
+     flex-direction: column;
+     gap: 2rem;
+     padding: 0.6rem;
+     margin: 0 auto;
+     align-items: center;
+    }
+    .content-right{
+      display: flex;
+      text-align: center;
+      flex-direction: column;
+      animation: slideFromLeft 1s ease-out forwards;
+      opacity: 0;
+      gap: 1.5rem;
+      padding-top: 8rem;
+    }
+   @keyframes slideFromLeft {
+    0%{
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    100%{
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+   }
+   
+ 
+   
+
+     .headline {
+      font-size: 48px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #0f172a;
+      margin-bottom: 24px;
+    } 
+
+    .subheading {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #334155;
+      margin-bottom: 36px;
+    } 
+
+    
+    .call a {
+      display: inline-block;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      color: white;
+
+      background: linear-gradient(
+        135deg,
+        #405DE6,
+        #833AB4,
+        #E1306C,
+        #F77737
+      );
+    
+
+      border-radius: 10px;
+      box-shadow: 0 14px 35px rgba(84, 7, 32, 0.35);
+      transition: all 0.25s ease;
+    }
+
+    .call a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 45px rgba(225, 48, 108, 0.45);
+     
+    }
+
+    
+   .illustration {
+  width: 100%;
+  max-width: 1000px;
+  height: auto;
+}
+    .section-image{
+      animation: GrowUp 1.2s ease-out forwards ;
+      opacity: 0;
+      
+    
+    }
+   
+    @keyframes GrowUp {
+      0%{
+        opacity: 0;
+        transform: translateX(100%)
+      }
+      100%{
+        opacity: 1;
+        transform: translateX(0%);
+      }
+      
+    }
+   
+     
+      
+
+     
+    
+      .cardcontainer{
+        display: flex;
+        max-width: 1500px;
+         gap: 2rem;
+         padding: 0.6rem;
+         margin: 0 auto;
+        
+      }
+    
+        .cards{
+           background: linear-gradient(
+    135deg,
+    #1e1b4b,
+    #312e81,
+    #4c1d95
+  );
+backdrop-filter: blur(10px);
+         color: #f8fafc;
+           
+           height: 300px;
+           width: 360px;
+           border-radius: 8px;
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           padding: 20px;
+           margin: 0 auto;
+           box-shadow: 0 2px 30px rgb(81, 77, 91);
+           transition: all;
+           transition-duration: 0.5s;
+           justify-content: center;
+           gap: 3rem;
+           
+          
+        }
+        #cardone{
+          animation: slideUp 1s ease-in-out forwards;
+          animation-delay: 0.7s;
+          opacity: 0;
+          
+        }
+        @keyframes slideUp{
+          0%{
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          100%{
+            opacity: 1;
+            transform: translateY(0%);
+          }
+        }
+      
+         #cardtwo{
+          animation: slideUp 1.2s ease-in-out forwards;
+          opacity: 0;
+          animation-delay: 0.7s;
+          
+        }
+        @keyframes slideUp{
+          0%{
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          100%{
+            opacity: 1;
+            transform: translateY(0%);
+          }
+        }
+         #cardthree{
+          animation: slideUp 1.4s ease-in-out forwards;
+          opacity: 0;
+          animation-delay: 0.7s;
+          
+        }
+        @keyframes slideUp{
+          0%{
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          100%{
+            opacity: 1;
+            transform: translateY(0%);
+          }
+        }
+           #cardfour{
+          animation: slideUp 1.6s ease-in-out forwards;
+          opacity: 0;
+          animation-delay: 0.7s;
+          
+        }
+        @keyframes slideUp{
+          0%{
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          100%{
+            opacity: 1;
+            transform: translateY(0%);
+          }
+        }
+
+
+        .cards:hover{
+          transform: translateY(-7px);
+           box-shadow: 0 2px 30px rgb(148, 129, 201);
+
+        }
+        .line{
+          height: 1px;
+          width: 330px;
+    background-color: solid#b4cadf;    
+        }
+        .heading{
+          display: flex;
+          flex-direction: column;
+          max-width: 330px;
+          align-items: center;
+          
+        }
+
+        .star {
+          width: 30px;
+          height: 30px;
+          /* background: rgb(59, 11, 126); */
+          clip-path: polygon(
+            50% 0%,
+            61% 35%,
+            98% 35%,
+            68% 57%,
+            79% 91%,
+            50% 70%,
+            21% 91%,
+            32% 57%,
+            2% 35%,
+            39% 35%
+          );
+         background: linear-gradient(135deg, #F77737, #FCAF45);
+          
+        }
+      .background{
+        position: absolute;
+        height: 600px;
+        width: 500px;
+        background-color: #b06bde;
+        
+        clip-path: ellipse(49% 7% at 48% 79%);
+    
+        transform: translate(1040px, 135px);
+            -webkit-mask-image: radial-gradient(
+            ellipse at 48% 79%,
+            black 45%,
+            transparent 70%
+          );
+          mask-image: radial-gradient(
+            ellipse at 48% 79%,
+            black 45%,
+            transparent 70%
+          );
+   }
+   .mainshape{
+    position:absolute ;
+    height: 72rem;
+    width: 100rem;
+    background-color: #9890c4;
+    clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%);
+    transform: translateX(40rem);
+    
+    
+   }
+    @media (min-width: 768px) {
+    .main-section{
+      flex-direction: row;
+    }
+   }
+      @media (max-width: 768px) {
+    .cardcontainer{
+      flex-direction: column;
+    }
+    .background,.mainshape{
+      display: none;
+    }
+    .main-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+   }
+   @media (max-width: 600px) {
+
+  .headline {
+    font-size: 32px;
+  }
+
+  .subheading {
+    font-size: 16px;
+  }
+
+  .cardcontainer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cards {
+    max-width: 100%;
+  }
+
+ 
+  
+}
+
+
+
+
+.footer {
+  background: linear-gradient(
+    135deg,
+    #1e1b4b,
+    #312e81,
+    #4c1d95
+  );
+  color: #e5e7eb;
+  padding: 4rem 1.5rem 2rem;
+  margin-top: 5rem;
+  
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.5rem;
+}
+
+.footer-brand h2 {
+  font-size: 28px;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #833AB4, #E1306C, #F77737);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.footer-brand p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #c7d2fe;
+}
+
+.footer-links h3,
+.footer-social h3 {
+  font-size: 18px;
+  margin-bottom: 1rem;
+  color: #f9fafb;
+}
+
+.footer-links ul {
+  list-style: none;
+}
+
+.footer-links li {
+  font-size: 14px;
+  margin-bottom: 0.6rem;
+  color: #c7d2fe;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.footer-links li:hover {
+  color: #f472b6;
+}
+
+.social-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.social-icons a {
+  text-decoration: none;
+  font-size: 14px;
+  color: #c7d2fe;
+  transition: color 0.3s;
+}
+
+.social-icons a:hover {
+  color: #f77737;
+}
+
+.footer-bottom {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+  font-size: 13px;
+  color: #c7d2fe;
+}
+@media (max-width: 768px) {
+  .footer-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .social-icons {
+    align-items: center;
+  }
+}
+.footer {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: all 0.9s ease-out;
+}
+
+.footer.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+.footer-container > div {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease-out;
+}
+
+.footer.show .footer-container > div {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.footer.show .footer-container > div:nth-child(1) {
+  transition-delay: 0.1s;
+}
+.footer.show .footer-container > div:nth-child(2) {
+  transition-delay: 0.2s;
+}
+.footer.show .footer-container > div:nth-child(3) {
+  transition-delay: 0.3s;
+}
+.footer.show .footer-container > div:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+
+        
+
+        
+    </style>
+
+</head>
+<body>
+  
+  <div class="mainshape"></div>
+  <div class="background"></div>
+  
+       
+          <nav class="navbar">
+    <div class="nav-left">
+      
+        <img class="img" src="{{ url_for('static', filename='landing/logo.png') }}" alt="">
+     
+      <span class="name">AutoGram</span>
+    </div>
+  </nav>
+
+  
+         <div class="headpage"> 
+             <main class="main-section">
+                    <div class="content-right">
+                            
+                                <h1 class="headline">
+                            Automate Your Insta handle,
+                                save your precious time..
+                        </h1>
+                                <h2 class="subheading">
+                            An ability to automate your instagram DM , comments & posting!
+                        </h2>
+                            
+                        <div class="call">
+                            <a href="{{ url_for('auth.login') }}" target="_blank">Get Started</a>
+                        </div>
+             </div>
+             <div class="contentright">
+                 <div class="section-image">
+                  <img class="illustration" src="{{ url_for('static', filename='landing/landing.png') }}" alt="">
+                 </div>
+                 <div class="shape"></div>
+             </div>
+             
+             </main>
+         </div>
+          
+
+
+         
+       <div class="cardcontainer">
+                          <div class="cards" id="cardone">
+                        <div class="heading">
+                           <div class="star"></div>
+                            <h1 class="texthead">Auto Comments</h1>
+                        </div>
+                         <div class="line"></div>
+                       
+                        <div class="info">
+                            Providing auto commenting system for your instagram handle.You dont have to worry about the replies when someone comments on your posts.
+                        </div>
+                </div>
+                  <div class="cards" id="cardtwo">
+                        <div class="heading">
+                          <div class="star"></div>
+                            <h1 class="texthead">Auto Post</h1>
+                           
+                        </div>
+                            <div class="line"></div>
+                        <div class="info">
+                          Publish Instagram posts automatically without manual effort.
+Upload your content once, set the rules, and let automation handle consistent posting for maximum reach.
+                        </div>
+                </div>
+                  <div class="cards" id="cardthree">
+                        <div class="heading">
+                          <div class="star"></div>
+                            <h1 class="texthead">Auto DM</h1>
+                            
+                        </div>
+                            <div class="line"></div>
+                        <div class="info">
+                     Instantly respond to incoming DMs with smart automated replies.
+Save time, handle multiple conversations at scale, and keep your audience engaged 24/7.
+                        </div>
+                </div>
+                  <div class="cards" id="cardfour">
+                        <div class="heading">
+                          <div class="star"></div>
+                            <h1 class="texthead">Schedule posts</h1>
+                          
+                            
+                        </div>
+                            <div class="line"></div>
+                        
+                        <div class="info">
+                            Plan and schedule your Instagram posts in advance.
+Stay consistent, post at the best times, and manage your content calendar with ease.
+                        </div>
+                </div>
+       </div>
+     
+         <footer class="footer">
+  <div class="footer-container">
+
+    <!-- Brand -->
+    <div class="footer-brand">
+      <h2>AutoGram</h2>
+      <p>
+        Smart automation for Instagram DMs, comments, and posting.
+        Save time. Grow faster. Stay consistent.
+      </p>
+    </div>
+
+    <!-- Features -->
+    <div class="footer-links">
+      <h3>Automation</h3>
+      <ul>
+        <li>Auto DM Replies</li>
+        <li>Auto Commenting</li>
+        <li>Scheduled Posts</li>
+        <li>Auto posting</li>
+      </ul>
+    </div>
+
+    <!-- Resources -->
+    <div class="footer-links">
+      <h3>Product</h3>
+      <ul>
+        <li>How It Works</li>
+        <li>FAQs</li>
+        <li>Support</li>
+      </ul>
+    </div>
+
+    
+    <div class="footer-social">
+      <h3>Connect</h3>
+      <div class="social-icons">
+        <a href="#">Instagram</a>
+        <a href="#"></a>
+        <a href="#"></a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 AutoGram. Built for Instagram automation.
+  </div>
+</footer>
+
+ 
+  
+    <script>
+      const footer = document.querySelector(".footer");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          footer.classList.add("show");
+          observer.unobserve(footer); // animate once
+        }
+      });
+    },
+    { threshold: 0.2 }
+  );
+
+  observer.observe(footer);
+    </script>
+</body>
+</html>

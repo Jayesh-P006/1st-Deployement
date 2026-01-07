@@ -1,163 +1,282 @@
 {% extends 'base.html' %}
 {% block title %}Admin - Manage User Requests{% endblock %}
+
 {% block content %}
 <style>
-    .admin-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 24px rgba(10,102,194,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
-        padding: 32px 32px 24px 32px;
-        max-width: 1100px;
-        margin: 40px auto 0 auto;
+:root {
+    --primary: #7b5cff;
+    --secondary: #4facfe;
+    --accent: #c77dff;
+    --bg1: #f4f1ff;
+    --bg2: #eef5ff;
+}
+
+/* ===== PAGE BACKGROUND ===== */
+body {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(123,92,255,0.18), transparent 40%),
+        radial-gradient(circle at 85% 70%, rgba(79,172,254,0.18), transparent 40%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+}
+
+/* ===== PAGE LAYOUT ===== */
+.admin-page {
+    min-height: 100vh;
+    padding: 60px 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative side bars */
+.admin-page::before,
+.admin-page::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 180px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(123,92,255,0.12), transparent);
+    z-index: 0;
+}
+
+.admin-page::before { left: 0; }
+.admin-page::after {
+    right: 0;
+    background: linear-gradient(180deg, rgba(79,172,254,0.12), transparent);
+}
+
+/* ===== ADMIN WRAPPER ===== */
+.admin-wrapper {
+    max-width: 1250px;
+    margin: auto;
+    position: relative;
+    z-index: 2;
+}
+
+/* ===== MAIN CARD ===== */
+.admin-card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(18px);
+    border-radius: 22px;
+    box-shadow:
+        0 40px 100px rgba(123,92,255,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 1px solid rgba(123,92,255,0.25);
+    overflow: hidden;
+}
+
+/* ===== HEADER ===== */
+.admin-header {
+    padding: 26px 34px;
+    background:
+        linear-gradient(135deg, rgba(123,92,255,0.95), rgba(79,172,254,0.95));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.admin-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.admin-header a {
+    background: rgba(255,255,255,0.18);
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.25s, background 0.25s;
+}
+
+.admin-header a:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.28);
+}
+
+/* ===== TABLE SECTION ===== */
+.table-section {
+    padding: 30px 34px 38px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+}
+
+/* Table container glow */
+.table-box {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(123,92,255,0.18);
+    overflow-x: auto;
+}
+
+/* ===== TABLE ===== */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table thead {
+    background: linear-gradient(135deg, #f3efff, #eef4ff);
+}
+
+.admin-table th {
+    padding: 18px;
+    text-align: left;
+    font-size: 0.95rem;
+    color: #5b49c9;
+    font-weight: 700;
+}
+
+.admin-table td {
+    padding: 16px 18px;
+    font-size: 0.95rem;
+    color: #222;
+}
+
+.admin-table tbody tr {
+    transition: background 0.25s;
+}
+
+.admin-table tbody tr:hover {
+    background: #f7f5ff;
+}
+
+/* ===== ACTIONS ===== */
+.admin-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-actions select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* ===== BUTTONS ===== */
+.btn-admin {
+    padding: 9px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.btn-admin.approve {
+    background: linear-gradient(135deg, #7b5cff, #4facfe);
+    color: white;
+}
+
+.btn-admin.deny {
+    background: linear-gradient(135deg, #ff5f6d, #ff9966);
+    color: white;
+}
+
+.btn-admin:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+}
+
+/* Empty state */
+.empty-row {
+    text-align: center;
+    padding: 28px;
+    color: #666;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .admin-header {
+        flex-direction: column;
+        gap: 14px;
+        text-align: center;
     }
-    .admin-card h2 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 28px;
-        color: #222;
-    }
-    .admin-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: #f8fafc;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 1px 4px rgba(10,102,194,0.04);
-    }
-    .admin-table th, .admin-table td {
-        padding: 16px 14px;
-        text-align: left;
-        font-size: 1rem;
-    }
-    .admin-table th {
-        background: #f3f6f8;
-        color: #0a66c2;
-        font-weight: 600;
-        border-bottom: 2px solid #e9ecef;
-    }
-    .admin-table tr {
-        border-bottom: 1px solid #e9ecef;
-        transition: background 0.2s;
-    }
-    .admin-table tr:hover {
-        background: #f0f6ff;
-    }
-    .admin-table td {
-        color: #222;
-        vertical-align: middle;
-    }
-    .admin-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-    .admin-actions form {
-        display: inline-block;
-        margin: 0;
-    }
-    .admin-actions select {
-        padding: 4px 8px;
-        border-radius: 5px;
-        border: 1px solid #e9ecef;
-        font-size: 0.95rem;
-        margin-bottom: 4px;
-        background: #fff;
-    }
-    .btn-admin {
-        padding: 7px 18px;
-        border-radius: 5px;
-        border: none;
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.18s, color 0.18s;
-    }
-    .btn-admin.approve {
-        background: #0a66c2;
-        color: #fff;
-        margin-right: 2px;
-    }
-    .btn-admin.approve:hover {
-        background: #084b8a;
-    }
-    .btn-admin.deny {
-        background: #e74c3c;
-        color: #fff;
-    }
-    .btn-admin.deny:hover {
-        background: #b93222;
-    }
-    @media (max-width: 900px) {
-        .admin-card { padding: 18px 4px; }
-        .admin-table th, .admin-table td { padding: 10px 6px; font-size: 0.97rem; }
-    }
-    @media (max-width: 600px) {
-        .admin-card { padding: 6px 0; }
-        .admin-table th, .admin-table td { padding: 7px 2px; font-size: 0.93rem; }
-        .admin-table th, .admin-table td { white-space: nowrap; }
-        .admin-table { font-size: 0.93rem; }
-    }
+}
+
 </style>
-<div class="admin-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
-            <h2 style="margin: 0;">Pending User Requests</h2>
-            <a href="{{ url_for('admin.webhooks') }}" class="btn" style="background: #0a66c2; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px;">
-                🔗 Webhook Configuration
-            </a>
-        </div>
-        <table class="admin-table">
-                <thead>
-                        <tr>
+
+<div class="admin-page">
+    <div class="admin-wrapper">
+        <div class="admin-card">
+
+            <div class="admin-header">
+                <h2>Pending User Requests</h2>
+                <a href="{{ url_for('admin.webhooks') }}">🔗 Webhook Configuration</a>
+            </div>
+
+            <div class="table-section">
+                <div class="table-box">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
                                 <th>Full Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>Vertical Requested</th>
-                                <th>Position Requested</th>
-                                <th>Registered At</th>
+                                <th>Vertical</th>
+                                <th>Position</th>
+                                <th>Registered</th>
                                 <th>Actions</th>
-                        </tr>
-                </thead>
-                <tbody>
-                        {% for user in pending_users %}
-                        <tr>
-                                <td>{{ user.full_name }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.vertical or 'Not specified' }}</td>
-                                <td>{{ user.position or 'Not specified' }}</td>
-                                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                <td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in pending_users %}
+                            <tr>
+                                <td data-label="Full Name">{{ user.full_name }}</td>
+                                <td data-label="Username">{{ user.username }}</td>
+                                <td data-label="Email">{{ user.email }}</td>
+                                <td data-label="Vertical">{{ user.vertical or '—' }}</td>
+                                <td data-label="Position">{{ user.position or '—' }}</td>
+                                <td data-label="Registered">{{ user.created_at.strftime('%d %b %Y') }}</td>
+                                <td data-label="Actions">
                                     <div class="admin-actions">
                                         <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}">
-                                                <select name="vertical" required style="margin-bottom: 8px; width: 100%;">
-                                                        <option value="Content and Innovation" {% if user.vertical == 'Content and Innovation' %}selected{% endif %}>Content and Innovation</option>
-                                                        <option value="Social Media" {% if user.vertical == 'Social Media' %}selected{% endif %}>Social Media</option>
-                                                        <option value="Design" {% if user.vertical == 'Design' %}selected{% endif %}>Design</option>
-                                                        <option value="Marketing" {% if user.vertical == 'Marketing' %}selected{% endif %}>Marketing</option>
-                                                        <option value="PR & Sponsorship" {% if user.vertical == 'PR & Sponsorship' %}selected{% endif %}>PR & Sponsorship</option>
-                                                        <option value="Creatives" {% if user.vertical == 'Creatives' %}selected{% endif %}>Creatives</option>
-                                                        <option value="Production" {% if user.vertical == 'Production' %}selected{% endif %}>Production</option>
-                                                        <option value="Operations" {% if user.vertical == 'Operations' %}selected{% endif %}>Operations</option>
-                                                        <option value="Technical" {% if user.vertical == 'Technical' %}selected{% endif %}>Technical</option>
-                                                </select>
-                                                <select name="position" required style="margin-bottom: 8px; width: 100%;">
-                                                        <option value="Lead" {% if user.position == 'Lead' %}selected{% endif %}>Lead</option>
-                                                        <option value="Co-Lead" {% if user.position == 'Co-Lead' %}selected{% endif %}>Co-Lead</option>
-                                                        <option value="Member" {% if user.position == 'Member' %}selected{% endif %}>Member</option>
-                                                </select>
-                                                <button type="submit" class="btn-admin approve">Approve</button>
+                                            <select name="vertical" required>
+                                                <option>Content and Innovation</option>
+                                                <option>Social Media</option>
+                                                <option>Design</option>
+                                                <option>Marketing</option>
+                                                <option>PR & Sponsorship</option>
+                                                <option>Creatives</option>
+                                                <option>Production</option>
+                                                <option>Operations</option>
+                                                <option>Technical</option>
+                                            </select>
+                                            <select name="position" required>
+                                                <option>Lead</option>
+                                                <option>Co-Lead</option>
+                                                <option>Member</option>
+                                            </select>
+                                            <button class="btn-admin approve">Approve</button>
                                         </form>
+
                                         <form method="POST" action="{{ url_for('admin.deny_user', user_id=user.id) }}">
-                                                <button type="submit" class="btn-admin deny">Deny</button>
+                                            <button class="btn-admin deny">Deny</button>
                                         </form>
                                     </div>
                                 </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="7" style="text-align:center; color:#888;">No pending requests.</td></tr>
-                        {% endfor %}
-                </tbody>
-        </table>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="empty-row">No pending requests 🎉</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
 {% endblock %}
+

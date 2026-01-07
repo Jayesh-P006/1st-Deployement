@@ -1,275 +1,773 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram DMs - PostScheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}DM Conversations{% endblock %}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
 
-{% block content %}
-<div class="dm-header">
-  <div>
-    <a href="{{ url_for('settings.index') }}" class="btn secondary">← Back to Settings</a>
-    <h1>Instagram DMs</h1>
-    <p>Inbox-style view of your latest conversations and messages.</p>
-  </div>
-  <form method="POST" action="{{ url_for('dm.sync_conversations') }}" class="dm-sync">
-    <button type="submit" class="btn">🔄 Sync Previous DMs</button>
-    <small>Pulls recent conversations/messages via Graph API (requires messaging permissions).</small>
-  </form>
-</div>
+        .ig-container {
+            display: flex;
+            height: 100vh;
+            background: #000;
+        }
 
-{% if conversations %}
-<div class="dm-shell">
-  <aside class="dm-list">
-    {% for conv in conversations %}
-    {% set last_msg = conv.messages.order_by(DMMessage.created_at.desc()).first() %}
-    <a href="{{ url_for('dm.conversations', conversation_id=conv.id) }}"
-       class="dm-list-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}">
-      <div class="dm-list-row">
-        <div class="dm-avatar">{{ conv.get_display_name()[0:2]|upper }}</div>
-        <div class="dm-list-meta">
-          <div class="dm-list-top">
-            <span class="dm-name">{{ conv.get_display_name() }}</span>
-            <span class="dm-time">{{ (last_msg.created_at.strftime('%b %d, %H:%M')) if last_msg else '' }}</span>
-          </div>
-          <div class="dm-list-bottom">
-            <span class="dm-preview">{{ (last_msg.message_text[:70] + ('…' if last_msg and last_msg.message_text|length > 70 else '')) if last_msg else 'No messages yet' }}</span>
-            <div class="dm-badges">
-              {% if conv.has_issues() %}
-              <span class="dm-tag dm-tag-issue">Issue</span>
-              {% endif %}
-              {% if conv.has_auto_chat_off_messages() %}
-              <span class="dm-tag dm-tag-auto-off">Auto-Chat-Off</span>
-              {% endif %}
-              {% if conv.unread_count is defined and conv.unread_count and conv.unread_count > 0 %}
-              <span class="dm-unread-bubble">{{ conv.unread_count }}</span>
-              {% endif %}
+        /* Left Sidebar - Conversations List */
+        .ig-sidebar {
+            width: 380px;
+            border-right: 1px solid #262626;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .ig-sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #262626;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ig-sidebar-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .ig-sidebar-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ig-icon-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .ig-icon-btn:hover {
+            background: #262626;
+        }
+
+        .ig-back-btn {
+            background: #262626;
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .ig-back-btn:hover {
+            background: #363636;
+            transform: scale(1.02);
+        }
+
+        .ig-search-box {
+            padding: 12px 20px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .ig-search-input {
+            width: 100%;
+            background: #262626;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .ig-search-input::placeholder {
+            color: #8e8e8e;
+        }
+
+        .ig-conversations {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #262626 #000;
+        }
+
+        .ig-conversations::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ig-conversations::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .ig-conversations::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 3px;
+        }
+
+        .ig-conv-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: #fff;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .ig-conv-item:hover {
+            background: #0a0a0a;
+        }
+
+        .ig-conv-item.active {
+            background: #262626;
+        }
+
+        .ig-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .ig-conv-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ig-conv-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .ig-conv-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .ig-conv-time {
+            font-size: 12px;
+            color: #8e8e8e;
+        }
+
+        .ig-conv-preview {
+            font-size: 14px;
+            color: #8e8e8e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ig-unread-badge {
+            background: #0095f6;
+            color: #fff;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Main Chat Area */
+        .ig-chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #000;
+        }
+
+        .ig-chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #262626;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ig-chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ig-chat-header .ig-avatar {
+            width: 44px;
+            height: 44px;
+            font-size: 16px;
+        }
+
+        .ig-chat-header-info h2 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .ig-chat-header-info p {
+            font-size: 12px;
+            color: #8e8e8e;
+        }
+
+        .ig-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #262626 #000;
+        }
+
+        .ig-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ig-messages::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 3px;
+        }
+
+        .ig-message {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ig-message.incoming {
+            justify-content: flex-start;
+        }
+
+        .ig-message.outgoing {
+            justify-content: flex-end;
+        }
+
+        .ig-message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 60%;
+            min-width: 80px;
+        }
+
+        .ig-message.incoming .ig-message-wrapper {
+            align-items: flex-start;
+        }
+
+        .ig-message.outgoing .ig-message-wrapper {
+            align-items: flex-end;
+        }
+
+        .ig-message-bubble {
+            padding: 12px 16px;
+            border-radius: 22px;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            display: inline-block;
+        }
+
+        .ig-message.incoming .ig-message-bubble {
+            background: #262626;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ig-message.outgoing .ig-message-bubble {
+            background: #0095f6;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ig-message-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #8e8e8e;
+        }
+
+        .ig-message.incoming .ig-message-meta {
+            justify-content: flex-start;
+        }
+
+        .ig-message.outgoing .ig-message-meta {
+            justify-content: flex-end;
+        }
+
+        .ig-message-tag {
+            background: #262626;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .ig-message-error {
+            background: rgba(237, 73, 86, 0.15);
+            color: #ed4956;
+            font-size: 11px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border-left: 3px solid #ed4956;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            max-width: 100%;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .ig-message-error::before {
+            content: '⚠️';
+            flex-shrink: 0;
+        }
+
+        /* Composer */
+        .ig-composer {
+            padding: 16px 24px;
+            border-top: 1px solid #262626;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .ig-composer-input {
+            flex: 1;
+            background: #262626;
+            border: 1px solid #262626;
+            border-radius: 22px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .ig-composer-input:focus {
+            outline: none;
+            border-color: #0095f6;
+        }
+
+        .ig-composer-input::placeholder {
+            color: #8e8e8e;
+        }
+
+        .ig-send-btn {
+            background: #0095f6;
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .ig-send-btn:hover {
+            background: #1877f2;
+        }
+
+        .ig-send-btn:disabled {
+            background: #262626;
+            color: #8e8e8e;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .ig-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #8e8e8e;
+        }
+
+        .ig-empty-icon {
+            font-size: 96px;
+            margin-bottom: 8px;
+        }
+
+        .ig-empty h3 {
+            font-size: 22px;
+            color: #fff;
+        }
+
+        .ig-empty p {
+            font-size: 14px;
+        }
+
+        /* Status Indicator */
+        .ig-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #262626;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ig-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .ig-sidebar {
+                width: 100%;
+                display: none;
+            }
+
+            .ig-sidebar.show {
+                display: flex;
+            }
+
+            .ig-chat-container {
+                display: none;
+            }
+
+            .ig-chat-container.show {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ig-container">
+        <!-- Sidebar -->
+        <div class="ig-sidebar">
+            <div class="ig-sidebar-header">
+                <button class="ig-back-btn" onclick="window.location.href='/'" title="Back to Dashboard">
+                    ← Go Back
+                </button>
+                <div class="ig-sidebar-actions">
+                    <button class="ig-icon-btn" onclick="syncMessages()" title="Sync Previous DMs">
+                        🔄
+                    </button>
+                    <button class="ig-icon-btn" onclick="window.location.href='/settings'" title="Settings">
+                        ⚙️
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </a>
-    {% endfor %}
-  </aside>
 
-  <section class="dm-chat">
-    {% if selected_conversation %}
-    <div class="dm-chat-header">
-      <div>
-        <h2>{{ selected_conversation.get_display_name() }}</h2>
-        <p>{{ selected_conversation.message_count }} messages · {{ selected_conversation.auto_reply_count }} auto-replies</p>
-      </div>
-      <div class="dm-header-badges">
-        <button id="refreshBtn" class="btn secondary" style="margin-right: 10px;">
-          <span id="refreshIcon">🔄</span> Refresh
-        </button>
-        {% if selected_conversation.has_issues() %}
-        <span class="dm-tag dm-tag-issue">Issue</span>
-        {% endif %}
-        {% if selected_conversation.has_auto_chat_off_messages() %}
-        <span class="dm-tag dm-tag-auto-off">Auto-Chat-Off</span>
-        {% endif %}
-      </div>
+            <div class="ig-search-box">
+                <input type="text" class="ig-search-input" placeholder="Search messages..." id="searchInput" oninput="filterConversations()">
+            </div>
+
+            <div class="ig-conversations" id="conversationsList">
+                {% for conv in conversations %}
+                {% set last_msg = conv.messages.order_by(DMMessage.created_at.desc()).first() %}
+                <a href="{{ url_for('dm.conversations', conversation_id=conv.id) }}" 
+                   class="ig-conv-item {% if selected_conversation and conv.id == selected_conversation.id %}active{% endif %}"
+                   data-conv-id="{{ conv.id }}"
+                   data-search-text="{{ conv.get_display_name()|lower }} {{ last_msg.message_text[:100]|lower if last_msg else '' }}">
+                    <div class="ig-avatar">{{ conv.get_display_name()[0:2]|upper }}</div>
+                    <div class="ig-conv-content">
+                        <div class="ig-conv-top">
+                            <span class="ig-conv-name">{{ conv.get_display_name() }}</span>
+                            <span class="ig-conv-time">{{ (last_msg.created_at.strftime('%H:%M')) if last_msg else '' }}</span>
+                        </div>
+                        <div class="ig-conv-preview">{{ (last_msg.message_text[:50] + '...' if last_msg and last_msg.message_text|length > 50 else last_msg.message_text) if last_msg else 'No messages yet' }}</div>
+                    </div>
+                    {% if conv.unread_count is defined and conv.unread_count and conv.unread_count > 0 %}
+                    <span class="ig-unread-badge">{{ conv.unread_count }}</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="ig-chat-container {% if selected_conversation %}show{% endif %}">
+            {% if selected_conversation %}
+            <div class="ig-chat-header">
+                <div class="ig-chat-header-left">
+                    <div class="ig-avatar">{{ selected_conversation.get_display_name()[0:2]|upper }}</div>
+                    <div class="ig-chat-header-info">
+                        <h2>{{ selected_conversation.get_display_name() }}</h2>
+                        <p>{{ selected_conversation.message_count }} messages</p>
+                    </div>
+                </div>
+                <div class="ig-sidebar-actions">
+                    <button class="ig-icon-btn" onclick="refreshMessages()" title="Refresh">
+                        <span id="refreshIcon">🔄</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ig-messages" id="messagesContainer">
+                {% for message in messages %}
+                <div class="ig-message {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}" data-message-id="{{ message.id }}">
+                    <div class="ig-message-wrapper">
+                        <div class="ig-message-bubble">{{ message.message_text }}</div>
+                        <div class="ig-message-meta">
+                            <span>{{ message.created_at.strftime('%H:%M') }}</span>
+                            {% if message.is_auto_reply %}<span class="ig-message-tag">🤖 Auto</span>{% endif %}
+                            {% if not message.sent_successfully and message.sender_type == 'bot' %}<span class="ig-message-tag" style="background: #ed4956;">Failed</span>{% endif %}
+                        </div>
+                        {% if message.error_message %}
+                        <div class="ig-message-error">{{ message.error_message }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <form class="ig-composer" onsubmit="sendMessage(event)">
+                <textarea class="ig-composer-input" 
+                          placeholder="Message..." 
+                          id="messageInput" 
+                          rows="1"
+                          oninput="autoResize(this)"
+                          onkeypress="handleKeyPress(event)"></textarea>
+                <button type="submit" class="ig-send-btn" id="sendBtn">Send</button>
+            </form>
+            {% else %}
+            <div class="ig-empty">
+                <div class="ig-empty-icon">💬</div>
+                <h3>Your Messages</h3>
+                <p>Send private photos and messages to friends</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="dm-chat-window" id="chatWindow">
-      {% for message in messages %}
-      <div class="dm-bubble-row {% if message.sender_type == 'bot' %}outgoing{% else %}incoming{% endif %}" data-message-id="{{ message.id }}">
-        <div class="dm-bubble {% if message.sender_type == 'bot' %}bot{% else %}user{% endif %}">
-          <div class="dm-bubble-text">{{ message.message_text }}</div>
-          <div class="dm-bubble-meta">
-            <span>{{ message.created_at.strftime('%H:%M') }}</span>
-            {% if message.is_auto_reply %}<span class="tag">🤖 Auto-reply</span>{% endif %}
-            {% if not message.sent_successfully and message.sender_type == 'bot' %}<span class="tag error">Failed</span>{% endif %}
-          </div>
-          {% if message.error_message %}
-          <div class="dm-bubble-error">⚠️ {{ message.error_message }}</div>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-
-      {% if not messages %}
-      <div class="dm-empty-chat">No messages yet</div>
-      {% endif %}
+    <!-- Status Indicator -->
+    <div class="ig-status">
+        <div class="ig-status-dot"></div>
+        <span>Auto-refresh active</span>
     </div>
 
-    <!-- Manual reply composer (emoji friendly) -->
-    <form class="dm-composer" method="POST" action="{{ url_for('dm.reply_conversation', conversation_id=selected_conversation.id) }}" id="replyForm">
-      <textarea name="message_text" rows="2" placeholder="Type a reply... emojis supported 😊" required id="messageInput"></textarea>
-      <button type="submit" class="btn">Send</button>
-    </form>
-    {% else %}
-    <div class="dm-empty-chat">Select a conversation to view messages.</div>
-    {% endif %}
-  </section>
-</div>
-{% else %}
-<div class="card" style="text-align: center; padding: 60px 20px;">
-  <h2 style="color: #999; margin-bottom: 10px;">No conversations found</h2>
-  <p style="color: #999;">DM conversations will appear here once users start messaging</p>
-</div>
-{% endif %}
-{% endblock %}
+    <script>
+        const CONVERSATION_ID = {{ selected_conversation.id if selected_conversation else 'null' }};
+        let lastMessageCount = {{ messages|length if messages else 0 }};
+        let isRefreshing = false;
 
-{% block scripts %}
-{% if selected_conversation %}
-<script>
-// Real-time message polling - fetch new messages every 3 seconds
-const CONVERSATION_ID = {{ selected_conversation.id }};
-let lastMessageCount = {{ messages|length }};
-let isPolling = true;
-
-function scrollToBottom() {
-  const chatWindow = document.getElementById('chatWindow');
-  if (chatWindow) {
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }
-}
-
-function createMessageBubble(msg) {
-  const row = document.createElement('div');
-  row.className = `dm-bubble-row ${msg.sender_type === 'bot' ? 'outgoing' : 'incoming'}`;
-  row.setAttribute('data-message-id', msg.id);
-  
-  const bubble = document.createElement('div');
-  bubble.className = `dm-bubble ${msg.sender_type === 'bot' ? 'bot' : 'user'}`;
-  
-  const text = document.createElement('div');
-  text.className = 'dm-bubble-text';
-  text.textContent = msg.message_text;
-  bubble.appendChild(text);
-  
-  const meta = document.createElement('div');
-  meta.className = 'dm-bubble-meta';
-  
-  const time = document.createElement('span');
-  time.textContent = msg.created_at_time;
-  meta.appendChild(time);
-  
-  if (msg.is_auto_reply) {
-    const tag = document.createElement('span');
-    tag.className = 'tag';
-    tag.textContent = '🤖 Auto-reply';
-    meta.appendChild(tag);
-  }
-  
-  if (!msg.sent_successfully && msg.sender_type === 'bot') {
-    const errorTag = document.createElement('span');
-    errorTag.className = 'tag error';
-    errorTag.textContent = 'Failed';
-    meta.appendChild(errorTag);
-  }
-  
-  bubble.appendChild(meta);
-  
-  if (msg.error_message) {
-    const error = document.createElement('div');
-    error.className = 'dm-bubble-error';
-    error.textContent = '⚠️ ' + msg.error_message;
-    bubble.appendChild(error);
-  }
-  
-  row.appendChild(bubble);
-  return row;
-}
-
-async function refreshMessages(isManual = false) {
-  const refreshBtn = document.getElementById('refreshBtn');
-  const refreshIcon = document.getElementById('refreshIcon');
-  
-  if (isManual && refreshBtn) {
-    refreshBtn.disabled = true;
-    refreshIcon.style.display = 'inline-block';
-    refreshIcon.style.animation = 'spin 1s linear infinite';
-  }
-  
-  try {
-    const response = await fetch(`/dm/api/messages/${CONVERSATION_ID}`);
-    const data = await response.json();
-    
-    if (data.success && data.messages.length > lastMessageCount) {
-      // New messages arrived - update chat container only
-      const chatWindow = document.getElementById('chatWindow');
-      const existingIds = new Set(
-        Array.from(chatWindow.querySelectorAll('[data-message-id]'))
-          .map(el => parseInt(el.getAttribute('data-message-id')))
-      );
-      
-      data.messages.forEach(msg => {
-        if (!existingIds.has(msg.id)) {
-          const bubble = createMessageBubble(msg);
-          chatWindow.appendChild(bubble);
-          existingIds.add(msg.id);
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
-      });
-      
-      lastMessageCount = data.messages.length;
-      scrollToBottom();
-      
-      // Update conversation header count
-      const headerP = document.querySelector('.dm-chat-header p');
-      if (headerP) {
-        const parts = headerP.textContent.split('·');
-        if (parts.length >= 2) {
-          headerP.textContent = `${data.message_count} messages · ${parts[1].trim()}`;
+
+        // Handle enter key (shift+enter for new line, enter to send)
+        function handleKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('sendBtn').click();
+            }
         }
-      }
-    }
-  } catch (error) {
-    console.error('Failed to refresh messages:', error);
-  } finally {
-    if (isManual && refreshBtn) {
-      refreshBtn.disabled = false;
-      refreshIcon.style.animation = '';
-    }
-  }
-}
 
-// Auto-refresh chat container only (every 3 seconds)
-setInterval(() => refreshMessages(false), 3000);
+        // Filter conversations
+        function filterConversations() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.ig-conv-item');
+            
+            items.forEach(item => {
+                const searchText = item.getAttribute('data-search-text');
+                item.style.display = searchText.includes(query) ? 'flex' : 'none';
+            });
+        }
 
-// Add CSS for spin animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
-document.head.appendChild(style);
+        // Scroll to bottom
+        function scrollToBottom(smooth = false) {
+            const container = document.getElementById('messagesContainer');
+            if (container) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: smooth ? 'smooth' : 'auto'
+                });
+            }
+        }
 
-// Scroll to bottom on load
-scrollToBottom();
+        // Create message bubble
+        function createMessageBubble(msg) {
+            const div = document.createElement('div');
+            div.className = `ig-message ${msg.sender_type === 'bot' ? 'outgoing' : 'incoming'}`;
+            div.setAttribute('data-message-id', msg.id);
+            
+            div.innerHTML = `
+                <div class="ig-message-wrapper">
+                    <div class="ig-message-bubble">${msg.message_text}</div>
+                    <div class="ig-message-meta">
+                        <span>${msg.created_at_time}</span>
+                        ${msg.is_auto_reply ? '<span class="ig-message-tag">🤖 Auto</span>' : ''}
+                        ${!msg.sent_successfully && msg.sender_type === 'bot' ? '<span class="ig-message-tag" style="background: #ed4956;">Failed</span>' : ''}
+                    </div>
+                    ${msg.error_message ? `<div class="ig-message-error">${msg.error_message}</div>` : ''}
+                </div>
+            `;
+            
+            return div;
+        }
 
-// Handle manual refresh button click
-document.getElementById('refreshBtn')?.addEventListener('click', () => refreshMessages(true));
+        // Refresh messages
+        async function refreshMessages() {
+            if (!CONVERSATION_ID || isRefreshing) return;
+            
+            isRefreshing = true;
+            const icon = document.getElementById('refreshIcon');
+            icon.style.animation = 'spin 1s linear infinite';
+            
+            try {
+                const response = await fetch(`/dm/api/messages/${CONVERSATION_ID}`);
+                const data = await response.json();
+                
+                if (data.success && data.messages.length > lastMessageCount) {
+                    const container = document.getElementById('messagesContainer');
+                    const existingIds = new Set(
+                        Array.from(container.querySelectorAll('[data-message-id]'))
+                            .map(el => parseInt(el.getAttribute('data-message-id')))
+                    );
+                    
+                    data.messages.forEach(msg => {
+                        if (!existingIds.has(msg.id)) {
+                            container.appendChild(createMessageBubble(msg));
+                        }
+                    });
+                    
+                    lastMessageCount = data.messages.length;
+                    scrollToBottom(true);
+                }
+            } catch (error) {
+                console.error('Refresh error:', error);
+            } finally {
+                icon.style.animation = '';
+                isRefreshing = false;
+            }
+        }
 
-// Handle form submission with AJAX for smoother UX
-document.getElementById('replyForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const formData = new FormData(e.target);
-  const messageText = formData.get('message_text');
-  
-  if (!messageText.trim()) return;
-  
-  try {
-    const response = await fetch(e.target.action, {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (response.ok) {
-      // Clear input
-      document.getElementById('messageInput').value = '';
-      
-      // Trigger immediate poll to show sent message
-      setTimeout(pollMessages, 500);
-    }
-  } catch (error) {
-    console.error('Failed to send reply:', error);
-    // Fallback to normal form submission
-    e.target.submit();
-  }
-});
-</script>
-{% endif %}
-{% endblock %}
+        // Send message
+        async function sendMessage(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text || !CONVERSATION_ID) return;
+            
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('message_text', text);
+                
+                const response = await fetch(`/dm/${CONVERSATION_ID}/reply`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    autoResize(input);
+                    setTimeout(refreshMessages, 500);
+                } else {
+                    alert('Failed to send message');
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send';
+            }
+        }
+
+        // Sync previous messages
+        async function syncMessages() {
+            if (!confirm('Sync previous Instagram DMs? This may take a moment.')) return;
+            
+            try {
+                const formData = new FormData();
+                const response = await fetch('/dm/sync', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    alert('Sync completed! Refreshing...');
+                    location.reload();
+                } else {
+                    alert('Sync failed. Check console for details.');
+                }
+            } catch (error) {
+                alert('Network error during sync.');
+            }
+        }
+
+        // Auto-refresh every 3 seconds
+        setInterval(refreshMessages, 3000);
+
+        // Initial scroll
+        scrollToBottom();
+
+        // Add spin keyframe
+        const style = document.createElement('style');
+        style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

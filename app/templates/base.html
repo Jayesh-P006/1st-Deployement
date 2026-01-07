@@ -9,45 +9,50 @@
 </head>
 <body>
   <nav class="nav">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="container" style="display: flex; justify-content: center; align-items: center;">
       <a href="{% if session.get('user_id') %}{{ url_for('collab.drafts') }}{% else %}{{ url_for('auth.login') }}{% endif %}" class="brand">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm2 4h10v2H7v-2z"/></svg>
         PostScheduler
       </a>
       {% if session.get('user_id') %}
-      <div style="display: flex; gap: 10px; align-items: center; flex: 1; justify-content: center; max-width: 800px;">
-        <a href="{{ url_for('collab.drafts') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+      <div style="display: flex; gap: 10px; align-items: center; flex: 1; justify-content: center; max-width: 1000px;">
+        <a href="{{ url_for('collab.drafts') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           📝 <span>Drafts</span>
         </a>
-        <a href="{{ url_for('main.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('main.index') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           📅 <span>Scheduled</span>
         </a>
         <a href="{{ url_for('automation.dashboard') }}" class="btn secondary" style="background: #fff; color: #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           ⚡ <span>Automations</span>
         </a>
-        <a href="{{ url_for('status.workflow_status') }}" class="btn secondary" style="background: #fff; color: #10b981; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('status.workflow_status') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           🔄 <span>Workflow</span>
         </a>
-        <a href="{{ url_for('rag.status') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('rag.status') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           🧠 <span>RAG</span>
         </a>
-        <a href="{{ url_for('settings.index') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('settings.index') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           ⚙️ <span>Settings</span>
         </a>
       </div>
       <div style="display: flex; gap: 10px; align-items: center;">
-        <a href="{{ url_for('collab.new_draft') }}" class="btn" style="background: #28a745; color: #fff; padding: 8px 16px;">
+        <a href="{{ url_for('collab.new_draft') }}" class="btn" style="background: linear-gradient(
+    135deg,
+    #405DE6,
+    #833AB4,
+    #E1306C
+  ); color: #fff; padding: 8px 16px;">
           <span style="font-size: 18px; line-height: 1;">+</span> <span>New Draft</span>
         </a>
         {% if session.get('role') == 'admin' %}
-        <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="background: #fff; color: #d63384; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           🛡️ <span>Admin</span>
         </a>
         {% endif %}
-        <a href="{{ url_for('auth.profile') }}" class="btn secondary" style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+        <a href="{{ url_for('auth.profile') }}" class="btn secondary" style="background: #fff; color:  #8b5cf6; border: 1.5px solid #e9ecef; padding: 8px 14px;">
           👤 <span>Profile</span>
         </a>
-        <a href="{{ url_for('auth.logout') }}" class="btn danger" style="background: #dc3545; color: #fff; padding: 8px 14px;">
+        <a href="{{ url_for('auth.logout') }}" class="btn danger" style="background: #6b25ad; color: #fff; padding: 8px 14px;">
           🚪 <span>Logout</span>
         </a>
       </div>
@@ -60,6 +65,29 @@
       {% endif %}
       </div>
     </div>
+    <div class="mobile-menu-btn" onclick="toggleMobileMenu()">
+  &#8942;
+</div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-menu-header">
+    <span class="back-arrow" onclick="toggleMobileMenu()">←</span>
+    <span class="menu-title">Menu</span>
+  </div>
+  <a href="{{ url_for('collab.drafts') }}">📝 Drafts</a>
+  <a href="{{ url_for('main.index') }}">📅 Scheduled</a>
+  <a href="{{ url_for('automation.dashboard') }}">⚡ Automations</a>
+  <a href="{{ url_for('status.workflow_status') }}">🔄 Workflow</a>
+  <a href="{{ url_for('rag.status') }}">🧠 RAG</a>
+  <a href="{{ url_for('settings.index') }}">⚙️ Settings</a>
+  <a href="{{ url_for('collab.new_draft') }}" class="primary">➕ New Draft</a>
+  <a href="{{ url_for('admin.manage_requests') }}" class="btn secondary" style="background: #fff; color: #d63384; border: 1.5px solid #e9ecef; padding: 8px 14px;">
+          🛡️ <span>Admin</span>
+        </a>
+  <a href="{{ url_for('auth.profile') }}">👤 Profile</a>
+  <a href="{{ url_for('auth.logout') }}" class="danger">🚪 Logout</a>
+</div>
   </nav>
   <div class="time-display" id="currentTime"></div>
   <main class="container">
@@ -102,6 +130,11 @@
     
     updateTime();
     setInterval(updateTime, 1000);
+    
+  function toggleMobileMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+
   </script>
   {% block scripts %}{% endblock %}
 </body>

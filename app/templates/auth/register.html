@@ -3,181 +3,433 @@
 
 {% block head %}
 <style>
-  .register-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0f2f5;
-    padding: 20px 0;
-  }
+ 
+.auth-bg {
+  min-height: 100vh;
+  position: relative;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.auth-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 89%;
+  background: linear-gradient(135deg, #8c20ff, #1364f0);
+  clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+  opacity: 0.08;
+  transform: translateX(34rem);
+
+  animation: softFade 0.8s ease-out forwards;
+
   
-  .register-card {
-    background: white;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    max-width: 450px;
-    width: 100%;
-  }
+
+
+}
+.register-container{
+  background-color: #ffffff;
+  box-shadow:  0 5px 5px 3px#333;
+  border-radius: 10px;
+}
+
+
+.auth-layout {
+  max-width: 1200px;
+  margin: auto;
+  padding: 60px 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  position: relative;
+  z-index: 1;
+  align-items: center;
   
-  .register-header {
-    text-align: center;
-    margin-bottom: 30px;
-  }
+}
+
+
+.register-card {
+
+  padding: 40px;
+ 
   
-  .register-header h2 {
-    color: #333;
-    margin: 0 0 10px 0;
+  opacity: 0;
+  animation: fadeSlideRight 1.2s ease-out forwards;
+    animation-delay: 0.2s;
+     background: linear-gradient(
+    180deg,
+    #f5c9c9 0%,
+    #d3cce6 100%
+  );
+
+  border: 1px solid rgba(121, 34, 214, 0.08);
+  border-radius: 18px;
+
+  box-shadow:
+    0 20px 40px rgba(154, 73, 242, 0.629),
+    0 8px 16px rgba(37, 116, 252, 0.501);
+}
+
+
+
+
+.register-header h2 {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+.register-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.reg-form-group input:focus,
+.reg-form-group select:focus {
+  outline: none;
+  border-color: #6a11cb;
+  box-shadow: 0 0 0 2px rgba(106,17,203,0.15);
+}
+
+
+.register-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.register-btn:hover {
+  transform: translateY(-1px);
+}
+
+.auth-info h1 {
+  font-size: 44px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+.auth-info{
+  transform: translateX(2rem);
+    opacity: 0;
+  animation: fadeSlideLeft 1.2s ease-out forwards;
+  animation-delay: 0.1s;
+}
+
+.auth-info h1 span {
+  background: linear-gradient(135deg, #6a11cb, #ff5ea8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-info p {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+.auth-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.auth-info li {
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #444;
+}
+
+
+.register-container *,
+.register-container *::before,
+.register-container *::after {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, sans-serif;
+}
+
+
+.register-container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+
+.auth-layout {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+
+.register-card {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 18px;
+   box-shadow:
+    0 20px 40px rgba(106, 17, 203, 0.12),
+    0 8px 16px rgba(37, 117, 252, 0.08)
+}
+
+
+.register-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.register-header p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.reg-form-group {
+  margin-bottom: 18px;
+}
+
+.reg-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.reg-form-group input,
+.reg-form-group select {
+  width: 100%;
+  height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  background: #fff;
+}
+
+.reg-form-group input:focus,
+.reg-form-group select:focus {
+  outline: none;
+  border-color: #6a11cb;
+  box-shadow: 0 0 0 2px rgba(106,17,203,0.15);
+}
+
+
+#password-error {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+
+.register-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+
+.register-footer {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.register-footer a {
+  color: #6a11cb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-info h1 {
+  font-size: 44px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.auth-info span {
+  background: linear-gradient(135deg, #6a11cb, #ff5ea8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-info p {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 24px;
+}
+
+.auth-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.auth-info li {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+
+@media (max-width: 768px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+
   }
-  
-  .register-header p {
-    color: #666;
-    font-size: 14px;
-  }
-  
-  .register-form {
-    margin-top: 20px;
-  }
-  
-  .reg-form-group {
-    margin-bottom: 20px;
-  }
-  
-  .reg-form-group.submit {
-    margin-bottom: 25px;
-  }
-  
-  .reg-form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #333;
-  }
-  
-  .reg-form-group input,
-  .reg-form-group select {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    box-sizing: border-box;
-  }
-  
-  .reg-form-group select {
-    background: white;
-  }
-  
-  #password-error {
-    font-size: 12px;
-    color: #dc3545;
-    margin-top: 6px;
-    margin-bottom: 0;
+
+  .auth-info {
     display: none;
   }
-  
-  .register-btn {
-    width: 100%;
-    padding: 12px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+}
+@media (max-width: 497px){
+  .auth-layout{
+    width: 35rem;
   }
   
-  .register-footer {
-    text-align: center;
-    margin-top: 20px;
+
+}
+@keyframes fadeSlideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(5rem);
   }
-  
-  .register-footer p {
-    color: #666;
-    font-size: 14px;
+  to {
+    opacity: 1;
+    transform: translateX(2rem);
   }
-  
-  .register-footer a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
+}
+
+@keyframes fadeSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
   }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes softFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.08;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="register-container">
+<div class="register-container auth-bg">
+  <div class="auth-layout">
+
+   
     <div class="register-card">
-        <div class="register-header">
-            <h2>Create Account</h2>
-            <p>Join your team's content workflow</p>
+      <div class="register-header">
+        <h2>Create Account</h2>
+        <p>Join your team's content workflow ✨</p>
+      </div>
+
+      <form method="POST" class="register-form" onsubmit="return validatePasswords();">
+
+        <div class="reg-form-group">
+          <label>Full Name</label>
+          <input type="text" name="full_name" required>
         </div>
 
-        <form method="POST" class="register-form" onsubmit="return validatePasswords();">
-            <div class="reg-form-group">
-                <label>Full Name</label>
-                <input type="text" name="full_name" required>
-            </div>
-
-            <div class="reg-form-group">
-                <label>Email</label>
-                <input type="email" name="email" required>
-            </div>
-
-            <div class="reg-form-group">
-                <label>Username</label>
-                <input type="text" name="username" required>
-            </div>
-
-            <div class="reg-form-group">
-                <label>Password</label>
-                <input type="password" name="password" id="password" required>
-            </div>
-
-            <div class="reg-form-group">
-                <label>Confirm Password</label>
-                <input type="password" name="confirm_password" id="confirm_password" required>
-                <p id="password-error">Passwords do not match!</p>
-            </div>
-
-            <div class="reg-form-group">
-                <label>Vertical</label>
-                <select name="vertical" required>
-                    <option value="">Select your vertical...</option>
-                    <option value="Content and Innovation">Content and Innovation</option>
-                    <option value="Social Media">Social Media</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="PR & Sponsorship">PR & Sponsorship</option>
-                    <option value="Creatives">Creatives</option>
-                    <option value="Production">Production</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Technical">Technical</option>
-                </select>
-            </div>
-
-            <div class="reg-form-group submit">
-                <label>Position</label>
-                <select name="position" required>
-                    <option value="">Select your position...</option>
-                    <option value="Lead">Lead</option>
-                    <option value="Co-Lead">Co-Lead</option>
-                    <option value="Member">Member</option>
-                </select>
-            </div>
-
-            <button type="submit" class="register-btn">
-                Register
-            </button>
-        </form>
-
-        <div class="register-footer">
-            <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+        <div class="reg-form-group">
+          <label>Email</label>
+          <input type="email" name="email" required>
         </div>
+
+        <div class="reg-form-group">
+          <label>Username</label>
+          <input type="text" name="username" required>
+        </div>
+
+        <div class="reg-form-group">
+          <label>Password</label>
+          <input type="password" name="password" id="password" required>
+        </div>
+
+        <div class="reg-form-group">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" id="confirm_password" required>
+          <p id="password-error">Passwords do not match!</p>
+        </div>
+
+        <div class="reg-form-group">
+          <label>Vertical</label>
+          <select name="vertical" required>
+            <option value="">Select your vertical...</option>
+            <option>Content and Innovation</option>
+            <option>Social Media</option>
+            <option>Design</option>
+            <option>Marketing</option>
+            <option>PR & Sponsorship</option>
+            <option>Creatives</option>
+            <option>Production</option>
+            <option>Operations</option>
+            <option>Technical</option>
+          </select>
+        </div>
+
+        <div class="reg-form-group submit">
+          <label>Position</label>
+          <select name="position" required>
+            <option value="">Select your position...</option>
+            <option>Lead</option>
+            <option>Co-Lead</option>
+            <option>Member</option>
+          </select>
+        </div>
+
+        <button type="submit" class="register-btn">Register</button>
+      </form>
+
+      <div class="register-footer">
+        <p>Already have an account?
+          <a href="{{ url_for('auth.login') }}">Login</a>
+        </p>
+      </div>
     </div>
+
+    
+    <div class="auth-info">
+      <h1>
+        Build Your <span>Automation</span><br>
+        Workflow Today.
+      </h1>
+
+      <p>
+        Create your account and automate Instagram posts,
+        approvals, drafts, and team workflows seamlessly.
+      </p>
+
+      <ul>
+        <li>⚡ Smart Scheduling</li>
+        <li>📂 Draft & Approval Flow</li>
+        <li>🔐 Role-Based Access</li>
+        <li>🚀 Automation Ready</li>
+      </ul>
+    </div>
+
+  </div>
 </div>
 
 <script>

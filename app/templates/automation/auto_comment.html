@@ -3,177 +3,352 @@
 
 {% block head %}
 <style>
-.auto-comment-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px 20px;
+/* ================= ROOT THEME ================= */
+:root {
+    --bg-main: #f8fafc;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --border-soft: rgba(0, 0, 0, 0.06);
+
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+
+    --primary: #7c3aed;        /* Same family as New Draft button */
+    --primary-soft: #ede9fe;
+    --success: #10b981;
+    --danger: #ef4444;
+
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+
+    --shadow-soft: 0 10px 30px rgba(216, 193, 240, 0.897);
+    --shadow-hover: 0 16px 45px  rgba(190, 153, 229, 0.897);
 }
 
+/* ================= PAGE ================= */
+.auto-comment-container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px 24px;
+    background: var(--bg-main);
+}
+
+/* ================= HEADER ================= */
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 .page-header h1 {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
+/* Back Button */
 .back-link {
-    padding: 10px 20px;
-    background: white;
-    color: #6b7280;
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
+    padding: 10px 18px;
+    background: var(--card-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-soft);
     text-decoration: none;
     font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.25s ease;
 }
 
-.settings-card {
-    background: white;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 30px;
+.back-link:hover {
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
 }
 
-.settings-card h2 {
+/* ================= CARD BASE ================= */
+.settings-card,
+.logs-section {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border-soft);
+    margin-bottom: 32px;
+    transition: all 0.3s ease;
+}
+
+.settings-card:hover,
+.logs-section:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+/* ================= CARD TITLES ================= */
+.settings-card h2,
+.logs-section h2 {
     font-size: 20px;
     font-weight: 700;
-    margin: 0 0 20px 0;
-    color: #1f2937;
+    margin-bottom: 24px;
+    color: var(--text-primary);
 }
 
+/* ================= FORM ================= */
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 24px;
 }
 
 .form-group label {
-    display: block;
     font-weight: 600;
-    margin-bottom: 8px;
-    color: #374151;
+    font-size: 14px;
+    color: var(--text-primary);
 }
 
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group textarea,
-.form-group select {
+/* Inputs */
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
-    padding: 12px;
-    border: 2px solid #e5e7eb;
-    border-radius: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft);
+    background: #ffffff;
     font-size: 15px;
+    transition: all 0.25s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
 }
 
 .form-group textarea {
-    min-height: 100px;
+    min-height: 110px;
     resize: vertical;
 }
 
 .form-help {
     font-size: 13px;
-    color: #6b7280;
     margin-top: 6px;
+    color: var(--text-secondary);
 }
 
+/* ================= TOGGLE ================= */
 .toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
+    width: 56px;
     height: 30px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+    position: relative;
 }
 
 .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #cbd5e1;
-    transition: 0.4s;
+    background: #cbd5e1;
     border-radius: 30px;
+    transition: all 0.3s ease;
 }
 
 .toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
     width: 22px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
+    height: 22px;
 }
 
 input:checked + .toggle-slider {
-    background-color: #10b981;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
 }
 
-input:checked + .toggle-slider:before {
-    transform: translateX(30px);
+/* ================= SAVE BUTTON ================= */
+button.btn {
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
 }
 
-.logs-section {
-    background: white;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+button.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.35);
 }
 
+/* ================= LOGS ================= */
 .log-item {
-    padding: 15px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 18px 0;
     display: flex;
-    justify-content: space-between;
-    align-items: start;
-}
-
-.log-item:last-child {
-    border-bottom: none;
-}
-
-.log-content {
-    flex: 1;
+    gap: 16px;
+    border-bottom: 1px dashed var(--border-soft);
 }
 
 .log-type {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 10px;
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.log-status {
-    padding: 4px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
+    background: var(--primary-soft);
+    color: var(--primary);
 }
 
 .log-status.success {
-    background: #d1fae5;
-    color: #065f46;
+    background: #dcfce7;
+    color: #166534;
 }
 
 .log-status.failed {
     background: #fee2e2;
     color: #991b1b;
+}
+
+/* ================= EMPTY STATE ================= */
+.logs-section p {
+    font-size: 14px;
+}
+.settings-card {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(124, 58, 237, 0.04),
+            rgba(255, 255, 255, 0.9) 35%
+        ),
+        var(--card-bg);
+}
+
+/* Section divider feel */
+.form-group {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: all 0.25s ease;
+}
+
+/* Hover lift for form blocks */
+.form-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* Labels stronger + icon spacing */
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+/* Inputs – glass + depth */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    background: linear-gradient(
+        180deg,
+        #ffffff,
+        #f8fafc
+    );
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 15px;
+    box-shadow:
+        inset 0 1px 2px rgba(0,0,0,0.04),
+        0 1px 0 rgba(255,255,255,0.7);
+}
+
+/* Focus = premium glow */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    background: #ffffff;
+    border-color: var(--primary);
+    box-shadow:
+        0 0 0 4px rgba(124, 58, 237, 0.18),
+        inset 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Placeholder polish */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #94a3b8;
+}
+
+/* Help text – softer card feel */
+.form-help {
+    background: rgba(124, 58, 237, 0.06);
+    border-radius: 10px;
+    padding: 8px 12px;
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: #475569;
+}
+
+/* ================= TOGGLE UPGRADE ================= */
+.toggle-switch {
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));
+}
+
+.toggle-slider {
+    background: linear-gradient(135deg, #cbd5e1, #e2e8f0);
+}
+
+input:checked + .toggle-slider {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #6366f1
+    );
+}
+
+/* ================= SAVE BUTTON – HERO ================= */
+button.btn {
+    margin-top: 10px;
+    height: 52px;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #6366f1
+    );
+    box-shadow:
+        0 10px 30px rgba(124, 58, 237, 0.35),
+        inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+button.btn:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 18px 45px rgba(124, 58, 237, 0.45);
+}
+
+/* ================= MOBILE REFINEMENT ================= */
+@media (max-width: 768px) {
+    .form-group {
+        padding: 16px;
+    }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .settings-card,
+    .logs-section {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .log-item {
+        flex-direction: column;
+    }
 }
 </style>
 {% endblock %}
@@ -245,7 +420,7 @@ input:checked + .toggle-slider:before {
                 <p class="form-help">Comments containing these keywords will be ignored.</p>
             </div>
 
-            <button type="submit" class="btn" style="background: #10b981; color: white; padding: 12px 30px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%;">
+            <button type="submit" class="btn" style="background: #561098; color: white; padding: 12px 30px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 16px; width: 100%;">
                 💾 Save Settings
             </button>
         </form>

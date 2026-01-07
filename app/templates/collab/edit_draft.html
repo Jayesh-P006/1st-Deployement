@@ -728,10 +728,155 @@ body {
     background: #fef3c7;
     color: #92400e;
 }
+/* =====================================================
+   PAGE TRANSITIONS
+===================================================== */
+
+.page-enter {
+    animation: pageFadeUp 0.8s ease both;
+}
+
+@keyframes pageFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 1s ease forwards;
+}
+
+.step-card:nth-child(1) { animation-delay: 0.05s; }
+.step-card:nth-child(2) { animation-delay: 0.12s; }
+.step-card:nth-child(3) { animation-delay: 0.18s; }
+.step-card:nth-child(4) { animation-delay: 0.24s; }
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =====================================================
+   PREMIUM GLASS LOOK
+===================================================== */
+
+.header-card,
+.step-card,
+.progress-card,
+.comments-card {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+}
+
+/* Soft background texture (kills blank feeling) */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(102,126,234,0.08), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(168,85,247,0.08), transparent 40%);
+    z-index: -1;
+}
+
+/* =====================================================
+   MICRO INTERACTIONS
+===================================================== */
+
+.step-card:hover,
+.comments-card:hover {
+    transform: translateY(-4px);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+===================================================== */
+
+/* Tablets */
+@media (max-width: 1024px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comments-card {
+        position: relative;
+        top: 0;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+    .container {
+        padding: 20px 14px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .header-left h1 {
+        font-size: 22px;
+    }
+
+    .status-badge {
+        align-self: flex-start;
+    }
+
+    .main-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .step-card {
+        padding: 20px;
+    }
+
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .comments-card {
+        order: 2;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    textarea,
+    input[type="datetime-local"] {
+        font-size: 16px; /* iOS zoom fix */
+    }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+    .media-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meta-info {
+        gap: 10px;
+    }
+}
 
 </style>
 
-<div class="container">
+<div class="container page-enter">
     <!-- Header Card -->
     <div class="header-card">
         <div class="header-content">
@@ -785,7 +930,7 @@ body {
         <!-- Main Content -->
         <div class="main-content">
             <!-- Step 1: Upload Media -->
-            <div class="step-card">
+            <div class="step-card fade-up">
                 <div class="step-header">
                     <div class="step-number step-1">1</div>
                     <div class="step-title">
@@ -831,7 +976,7 @@ body {
             </div>
 
             <!-- Step 2: Write Content -->
-            <div class="step-card">
+            <div class="step-card fade-up">
                 <div class="step-header">
                     <div class="step-number step-2">2</div>
                     <div class="step-title">
@@ -881,7 +1026,7 @@ body {
             </div>
 
             <!-- Step 3: Add Mentions -->
-            <div class="step-card">
+            <div class="step-card fade-up">
                 <div class="step-header">
                     <div class="step-number step-3">3</div>
                     <div class="step-title">
@@ -937,7 +1082,7 @@ body {
 
             <!-- Step 4: Set Scheduled Time -->
             {% if draft.workflow_status == 'draft' %}
-            <div class="step-card">
+            <div class="step-card fade-up">
                 <div class="step-header">
                     <div class="step-number step-1" style="background: var(--info);">4</div>
                     <div class="step-title">
@@ -1009,7 +1154,7 @@ body {
             {% endif %}
 
             {% if draft.workflow_status == 'review' and current_user.can_approve() %}
-            <div class="step-card" style="border: 2px solid var(--success);">
+            <div class="step-card fade-up" style="border: 2px solid var(--success);">
                 <h3 style="margin: 0 0 20px 0; color: #1a202c; font-size: 20px;">Review & Approve</h3>
                 <p style="margin: 0 0 15px 0; color: #4b5563;">
                     📅 Will be scheduled for: <strong>{{ draft.scheduled_time.strftime('%Y-%m-%d %H:%M UTC') if draft.scheduled_time else 'Not set' }}</strong>
