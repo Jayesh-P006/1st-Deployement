@@ -61,7 +61,11 @@ class Config:
     
     # Public URL for serving uploaded files (required for Instagram API)
     # Set RAILWAY_PUBLIC_DOMAIN or PUBLIC_URL in Railway environment variables
-    RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
+    # Railway automatically provides RAILWAY_PUBLIC_DOMAIN or RAILWAY_STATIC_URL
+    RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '') or os.getenv('RAILWAY_STATIC_URL', '')
+    # Remove protocol from RAILWAY_STATIC_URL if present
+    if RAILWAY_DOMAIN.startswith(('http://', 'https://')):
+        RAILWAY_DOMAIN = RAILWAY_DOMAIN.split('://', 1)[1]
     PUBLIC_URL = os.getenv('PUBLIC_URL', f'https://{RAILWAY_DOMAIN}' if RAILWAY_DOMAIN else 'http://127.0.0.1:5000')
     
     # Instagram Configuration

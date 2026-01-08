@@ -64,6 +64,21 @@ def post_to_instagram(post):
     if not token or not business_id:
         raise ValueError('Instagram credentials not configured. Please set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID in config.')
     
+    # Validate PUBLIC_URL is properly configured
+    public_url = current_app.config.get('PUBLIC_URL', '')
+    if not public_url or 'localhost' in public_url or '127.0.0.1' in public_url:
+        raise ValueError(
+            'PUBLIC_URL must be set to a publicly accessible HTTPS URL. '
+            'Instagram cannot access localhost URLs. '
+            'Set RAILWAY_PUBLIC_DOMAIN or PUBLIC_URL environment variable to your deployed domain.'
+        )
+    if not public_url.startswith('https://'):
+        raise ValueError(
+            f'PUBLIC_URL must use HTTPS. Current: {public_url}. '
+            'Instagram requires HTTPS for image URLs. '
+            'Set PUBLIC_URL to https://your-domain.com'
+        )
+    
     if not post.image_path:
         raise ValueError('Instagram post requires at least one image. Please upload an image before posting.')
     
@@ -87,11 +102,23 @@ def post_to_instagram(post):
         media_endpoint = f"{API_BASE}/{business_id}/media"
         
         # Instagram requires a publicly accessible image URL
-        # Convert local file path to public URL
-        import os
-        filename = os.path.basename(image_paths[0])
-        public_url = current_app.config.get('PUBLIC_URL', 'http://127.0.0.1:5000')
-        image_url = f"{public_url}/uploads/{filename}"
+        # Check if the path is already a URL or needs conversion
+        image_path = image_paths[0]
+        if image_path.startswith('http://') or image_path.startswith('https://'):
+            # Already a URL, use directly
+            image_url = image_path
+        else:
+            # Convert local file path to public URL
+            import os
+            filename = os.path.basename(image_path)
+            public_url = current_app.config.get('PUBLIC_URL', 'http://127.0.0.1:5000')
+            # Ensure URL ends with /uploads/ for proper routing
+            public_url = public_url.rstrip('/')
+            image_url = f"{public_url}/uploads/{filename}"
+        
+        # Log the image URL for debugging
+        import sys
+        print(f'[DEBUG] Attempting to create Instagram media with URL: {image_url}', file=sys.stderr)
         
         data = {
             'image_url': image_url,
@@ -99,10 +126,15 @@ def post_to_instagram(post):
             'access_token': token
         }
         resp = requests.post(media_endpoint, data=data, timeout=30)
+        print(f'[DEBUG] Instagram response status: {resp.status_code}', file=sys.stderr)
         if resp.status_code >= 300:
             error_data = resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {'message': resp.text}
             error_msg = error_data.get('error', {}).get('message', error_data.get('message', resp.text))
-            raise RuntimeError(f'Instagram media create failed (HTTP {resp.status_code}): {error_msg}')
+            raise RuntimeError(
+                f'Instagram media create failed (HTTP {resp.status_code}): {error_msg}. '
+                f'Image URL: {image_url}. '
+                f'Ensure the URL is publicly accessible and uses HTTPS.'
+            )
         creation_id = resp.json().get('id')
         if not creation_id:
             raise RuntimeError('No creation id returned from Instagram API. Response: ' + str(resp.json()))
@@ -112,11 +144,21 @@ def post_to_instagram(post):
         for img_path in image_paths:
             media_endpoint = f"{API_BASE}/{business_id}/media"
             
-            # Convert local file path to public URL
-            import os
-            filename = os.path.basename(img_path)
-            public_url = current_app.config.get('PUBLIC_URL', 'http://127.0.0.1:5000')
-            image_url = f"{public_url}/uploads/{filename}"
+            # Check if the path is already a URL or needs conversion
+            if img_path.startswith('http://') or img_path.startswith('https://'):
+                # Already a URL, use directly
+                image_url = img_path
+            else:
+                # Convert local file path to public URL
+                import os
+                filename = os.path.basename(img_path)
+                public_url = current_app.config.get('PUBLIC_URL', 'http://127.0.0.1:5000')
+                # Ensure URL ends properly for proper routing
+                public_url = public_url.rstrip('/')
+                image_url = f"{public_url}/uploads/{filename}"
+            
+            import sys
+            print(f'[DEBUG] Creating carousel item with URL: {image_url}', file=sys.stderr)
             
             data = {
                 'image_url': image_url,
@@ -124,10 +166,15 @@ def post_to_instagram(post):
                 'access_token': token
             }
             resp = requests.post(media_endpoint, data=data, timeout=30)
+            print(f'[DEBUG] Carousel item response status: {resp.status_code}', file=sys.stderr)
             if resp.status_code >= 300:
                 error_data = resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {'message': resp.text}
                 error_msg = error_data.get('error', {}).get('message', error_data.get('message', resp.text))
-                raise RuntimeError(f'Instagram carousel item create failed (HTTP {resp.status_code}): {error_msg}')
+                raise RuntimeError(
+                    f'Instagram carousel item create failed (HTTP {resp.status_code}): {error_msg}. '
+                    f'Image URL: {image_url}. '
+                    f'Ensure the URL is publicly accessible and uses HTTPS.'
+                )
             media_id = resp.json().get('id')
             if media_id:
                 media_ids.append(media_id)

@@ -353,5 +353,24 @@ def account_status():
 @main_bp.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     from flask import send_from_directory
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    import os
+    import sys
+    
+    # Security: prevent directory traversal
+    if '..' in filename:
+        return 'Invalid filename', 400
+    
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    
+    # Check if file exists
+    file_path = os.path.join(upload_folder, filename)
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        print(f'[WARN] File not found: {file_path}', file=sys.stderr)
+        return 'File not found', 404
+    
+    try:
+        return send_from_directory(upload_folder, filename, as_attachment=False)
+    except Exception as e:
+        print(f'[ERROR] Error serving file {filename}: {str(e)}', file=sys.stderr)
+        return 'Error serving file', 500
 

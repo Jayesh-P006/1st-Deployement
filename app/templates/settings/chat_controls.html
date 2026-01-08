@@ -3,250 +3,6 @@
 {% block title %}Chat Control Settings{% endblock %}
 
 {% block content %}
-<style>
-/* ================= THEME TOKENS (MATCH DRAFT PAGE) ================= */
-:root {
-  --primary: #6366f1;
-  --primary-soft: #818cf8;
-  --secondary: #7c3aed;
-
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-
-  --bg-main: #eef1ff;
-  --bg-card: rgba(255,255,255,0.92);
-
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-
-  --radius-lg: 18px;
-  --radius-md: 14px;
-
-  --shadow-soft: 0 12px 35px rgba(99,102,241,0.18);
-  --shadow-hover: 0 28px 70px rgba(99,102,241,0.35);
-}
-
-
-/* ================= PAGE BACKGROUND ================= */
-body {
-  background:
-    radial-gradient(circle at top right, rgba(99,102,241,0.35), transparent 45%),
-    radial-gradient(circle at bottom left, rgba(124,58,237,0.35), transparent 45%),
-    linear-gradient(180deg, #f7f9ff, #eef1ff);
-  color: var(--text-main);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* ================= HEADERS ================= */
-h1 {
-  font-weight: 900;
-  letter-spacing: -0.6px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-h2, h3 {
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  color: #1e1b4b;
-}
-
-/* ================= GLOBAL CARDS ================= */
-div[style*="background: #fff"] {
-  background: var(--bg-card) !important;
-  border-radius: var(--radius-lg) !important;
-  border: none !important;
-  box-shadow: var(--shadow-soft);
-  transition: all 0.35s ease;
-}
-
-div[style*="background: #fff"]:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-hover);
-}
-
-/* ================= WARNING BANNER ================= */
-div[style*="Instagram Messaging Permission Required"] {
-  background: linear-gradient(135deg, #fff7e6, #fff2cc) !important;
-  border-radius: var(--radius-md);
-  box-shadow: 0 18px 40px rgba(245,158,11,0.35);
-}
-
-/* ================= STATS DASHBOARD ================= */
-div[style*="grid-template-columns: repeat(4"] > div {
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
-  transition: transform .3s ease, box-shadow .3s ease;
-}
-
-div[style*="grid-template-columns: repeat(4"] > div:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-hover);
-}
-
-/* ================= STAT NUMBERS ================= */
-div[style*="font-size: 24px"] {
-  font-weight: 900;
-  letter-spacing: -0.4px;
-}
-
-/* ================= QUICK CONTROL FORMS ================= */
-form[style*="justify-content: space-between"] {
-  border-radius: var(--radius-lg) !important;
-  padding: 16px !important;
-  box-shadow: var(--shadow-soft);
-  transition: all .3s ease;
-}
-
-form[style*="justify-content: space-between"]:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-}
-
-/* ================= BUTTONS ================= */
-button.btn,
-a.btn {
-  border-radius: 999px !important;
-  font-weight: 700;
-  letter-spacing: .3px;
-  transition: all .25s ease;
-}
-
-button.btn:hover,
-a.btn:hover {
-  transform: translateY(-2px);
-}
-
-/* ================= PRIMARY BUTTON ================= */
-button.btn {
-  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
-  box-shadow: 0 14px 35px rgba(99,102,241,0.45);
-}
-
-/* ================= INPUTS ================= */
-input,
-textarea {
-  border-radius: var(--radius-md) !important;
-  background: #f9fafb !important;
-  border: 1.5px solid rgba(99,102,241,0.25) !important;
-  transition: all .25s ease;
-}
-
-input:focus,
-textarea:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.25);
-  background: #ffffff !important;
-}
-
-/* ================= DETAIL SECTIONS ================= */
-div[style*="border: 1.5px solid"] {
-  border: none !important;
-  background: linear-gradient(180deg, #ffffff, #f6f7ff) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: inset 0 0 0 1px rgba(99,102,241,.12);
-}
-
-/* ================= MUTED TEXT ================= */
-p, small {
-  color: var(--text-muted) !important;
-  font-weight: 500;
-}
-
-/* ================= SCROLL ================= */
-div[style*="overflow-y: auto"] {
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary) transparent;
-}
-@media (max-width: 768px) {
-
-  /* REMOVE INNER SCROLL COMPLETELY */
-  div[style*="flex: 1; overflow-y: auto"] {
-    overflow-y: visible !important;
-    padding-right: 0 !important;
-  }
-
-  /* Remove forced viewport height */
-  div[style*="height: calc(100vh"] {
-    height: auto !important;
-  }
-
-  /* Page spacing */
-  body {
-    padding-bottom: 80px;
-  }
-
-  /* Header text scaling */
-  h1 {
-    font-size: 1.35rem !important;
-  }
-
-  /* Stats → single column */
-  div[style*="grid-template-columns: repeat(4"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Cards spacing */
-  div[style*="background: #fff"] {
-    border-radius: 16px !important;
-  }
-
-  /* Quick toggle forms stack vertically */
-  form[style*="justify-content: space-between"] {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
-  }
-
-  form[style*="justify-content: space-between"] button {
-    width: 100% !important;
-  }
-
-  /* Buttons full-width */
-  button.btn,
-  a.btn {
-    width: 100% !important;
-    text-align: center;
-  }
-
-  /* Inputs bigger for touch */
-  input,
-  textarea {
-    font-size: 16px !important;
-    padding: 10px !important;
-  }
-
-  /* Center bottom link */
-  a.btn.secondary {
-    width: 100% !important;
-  }
-}
-@media (max-width: 1024px) {
-  /* Reduce page height lock */
-  div[style*="height: calc(100vh"] {
-    height: auto !important;
-  }
-
-  /* Stats: 2 columns instead of 4 */
-  div[style*="grid-template-columns: repeat(4"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  /* Rate limit & time grids → stacked */
-  div[style*="grid-template-columns: 1fr 1fr"] {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Slightly tighter padding */
-  div[style*="padding: 16px"] {
-    padding: 14px !important;
-  }
-}
-
-
-</style>
 <div style="display: flex; flex-direction: column; height: calc(100vh - 140px); overflow: hidden;">
   <!-- Fixed Header -->
   <div style="flex-shrink: 0; margin-bottom: 12px;">
@@ -286,7 +42,7 @@ div[style*="overflow-y: auto"] {
   </div>
 
   <!-- Scrollable Content Area -->
-  <div  style="flex: 1; overflow-y: auto; padding-right: 8px;">
+  <div style="flex: 1; overflow-y: auto; padding-right: 8px;">
     <!-- Quick Toggles -->
     <div style="background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e9ecef; margin-bottom: 12px;">
       <h2 style="margin: 0 0 12px 0; font-size: 1.1rem;">🎛️ Quick Controls</h2>
@@ -421,8 +177,15 @@ div[style*="overflow-y: auto"] {
 
 {% block scripts %}
 <script>
-// Auto-refresh disabled to reduce unnecessary API calls
-// Stats will update on page refresh
-console.log('Chat controls loaded');
+// Auto-refresh stats every 30 seconds
+setInterval(() => {
+  fetch('{{ url_for("settings.api_status") }}')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Status updated:', data);
+      // Could update UI here
+    })
+    .catch(error => console.error('Error fetching status:', error));
+}, 30000);
 </script>
 {% endblock %}

@@ -26,6 +26,12 @@ def create_app():
 
     db.init_app(app)
     
+    # Ensure uploads folder exists and is properly configured
+    import os
+    upload_folder = app.config.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), '..', 'uploads'))
+    os.makedirs(upload_folder, exist_ok=True)
+    app.config['UPLOAD_FOLDER'] = upload_folder
+    
     # Add custom Jinja filter for JSON parsing
     import json
     @app.template_filter('from_json')
