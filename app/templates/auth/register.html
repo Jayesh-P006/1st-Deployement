@@ -46,6 +46,31 @@
   align-items: center;
   
 }
+/* ===== Brand / Logo ===== */
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.brand-logo {
+  font-size: 28px;
+}
+
+.brand-name {
+  font-size: 35px;
+  font-weight: 800;
+  background: linear-gradient(
+    45deg,
+    #f58529,
+    #dd2a7b,
+    #8134af,
+    #515bd4
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 
 .register-card {
@@ -282,25 +307,71 @@
   margin-bottom: 12px;
   font-size: 15px;
 }
+@media (min-width: 769px) {
+  .auth-layout {
+    grid-template-areas:
+      "brand brand"
+      "card info";
+  }
+
+  .login-brand {
+    grid-area: brand;
+    justify-content: flex-start;
+  }
+
+  .register-card {
+    grid-area: card;
+  }
+
+  .auth-info {
+    grid-area: info;
+  }
+}
 
 
-@media (max-width: 768px) {
+@media (max-width: 950px) {
   .auth-layout {
     grid-template-columns: 1fr;
+    padding-bottom: 70rem;
 
   }
 
   .auth-info {
     display: none;
   }
-}
-@media (max-width: 497px){
-  .auth-layout{
-    width: 35rem;
+  
+  .register-container {
+    padding: 0;
   }
+
+  .auth-layout {
+    padding: 0;
+    gap: 0;
+  }
+
+  .register-card {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 28px 22px;
+    
+  }
+}
+@media (max-width: 768px) {
+  .login-brand {
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
   
 
-}
+
 @keyframes fadeSlideLeft {
   from {
     opacity: 0;
@@ -336,7 +407,12 @@
 
 {% block content %}
 <div class="register-container auth-bg">
+   
   <div class="auth-layout">
+    <div class="login-brand">
+  <span class="brand-logo">⚙️</span>
+  <span class="brand-name">AutoGram</span>
+</div>
 
    
     <div class="register-card">
