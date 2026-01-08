@@ -7,7 +7,55 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <style>
     /* DM-specific full screen layout */
-    body { margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+    :root {
+      --dm-header-h: 64px;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      background: #f5f7fb;
+    }
+
+    /* Subtle animated background “graphics” (CSS only) */
+    .dm-fullscreen-container {
+      position: relative;
+      height: calc(100vh - var(--dm-header-h));
+      height: calc(100dvh - var(--dm-header-h));
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .dm-fullscreen-container::before {
+      content: "";
+      position: absolute;
+      inset: -40px;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(102, 126, 234, 0.16), transparent 45%),
+        radial-gradient(circle at 90% 25%, rgba(118, 75, 162, 0.14), transparent 50%),
+        radial-gradient(circle at 35% 95%, rgba(10, 102, 194, 0.10), transparent 55%);
+      z-index: -1;
+      animation: dmFloat 10s ease-in-out infinite alternate;
+    }
+
+    @keyframes dmFloat {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(14px, -10px, 0) scale(1.02); }
+    }
+
+    @keyframes dmFadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes dmPop {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
     .dm-fullscreen-header {
       background: #fff;
       border-bottom: 1px solid #e9ecef;
@@ -19,6 +67,18 @@
       position: sticky;
       top: 0;
       z-index: 100;
+    }
+
+    .dm-fullscreen-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: linear-gradient(90deg, #667eea, #0a66c2, #764ba2);
+      opacity: 0.25;
+      pointer-events: none;
     }
     .dm-fullscreen-logo {
       display: flex;
@@ -38,9 +98,58 @@
       gap: 10px;
       align-items: center;
     }
-    .dm-fullscreen-container {
-      height: calc(100vh - 57px);
-      overflow: hidden;
+    /* Override global DM sizing (style.css uses 70vh) */
+    .dm-shell {
+      height: 100% !important;
+      min-height: 0;
+      animation: dmFadeUp 320ms ease both;
+      display: grid;
+      grid-template-columns: clamp(280px, 30vw, 380px) 1fr;
+      gap: 0;
+    }
+
+    .dm-list {
+      height: 100% !important;
+      max-height: none !important;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .dm-list-item {
+      animation: dmFadeUp 260ms ease both;
+    }
+
+    .dm-chat {
+      height: 100% !important;
+      max-height: none !important;
+      min-height: 0;
+    }
+
+    .dm-chat-window {
+      height: 100% !important;
+      max-height: none !important;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .dm-bubble-row {
+      animation: dmPop 220ms ease both;
+      will-change: transform, opacity;
+    }
+
+    /* Slightly smoother hover, more “premium” feel */
+    .dm-list-item:hover {
+      transform: translateY(-1px);
+    }
+
+    .dm-bubble {
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .dm-bubble:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.10);
     }
     
     /* Mobile Responsive Styles */
@@ -82,8 +191,7 @@
       
       /* Conversations list - Show only when no conversation selected */
       .dm-list {
-        max-height: calc(100vh - 57px) !important;
-        height: calc(100vh - 57px) !important;
+        height: 100% !important;
       }
       
       /* Chat section - Hide list when chat is open on mobile */
@@ -92,14 +200,14 @@
       }
       
       /* Show chat and hide list when conversation is selected */
-      body:has(.dm-chat .dm-chat-header) .dm-list {
+      body.dm-has-chat .dm-list {
         display: none;
       }
       
-      body:has(.dm-chat .dm-chat-header) .dm-chat {
+      body.dm-has-chat .dm-chat {
         display: flex !important;
-        height: calc(100vh - 57px) !important;
-        max-height: calc(100vh - 57px) !important;
+        height: 100% !important;
+        max-height: none !important;
       }
       
       /* Chat header on mobile */
@@ -127,7 +235,7 @@
       
       /* Chat window adjustments */
       .dm-chat-window {
-        max-height: calc(100vh - 200px) !important;
+        max-height: none !important;
         padding: 12px;
       }
       
@@ -223,7 +331,7 @@
     }
   </style>
 </head>
-<body>
+<body class="{% if selected_conversation %}dm-has-chat{% endif %}">
 
 <!-- Minimal Header with Logo Only -->
 <div class="dm-fullscreen-header">
@@ -340,6 +448,20 @@
 {% endif %}
 
 </div><!-- Close dm-fullscreen-container -->
+
+<script>
+  // Keep DM container perfectly fitted to viewport
+  (function () {
+    const header = document.querySelector('.dm-fullscreen-header');
+    function setHeaderHeightVar() {
+      if (!header) return;
+      const h = Math.ceil(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--dm-header-h', h + 'px');
+    }
+    setHeaderHeightVar();
+    window.addEventListener('resize', setHeaderHeightVar);
+  })();
+</script>
 
 {% if selected_conversation %}
 <script>
