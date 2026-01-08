@@ -2,118 +2,549 @@
 
 {% block head %}
 <style>
-  .account-status-section {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border: 1px solid #e9ecef;
-  }
-  
-  .account-status-section h3 {
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-    color: #495057;
-  }
-  
-  .account-status-grid {
+  .card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 32px;
+    box-shadow: 0 18px 45px rgba(102, 126, 234, 0.18);
+    animation: fadeUp 0.7s ease both;
+}
+
+/* Headings */
+.card h1,
+.card h2 {
+    margin-bottom: 18px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* ===============================
+   ACCOUNT STATUS
+================================ */
+
+.account-status-section {
+    margin-top: 20px;
+}
+
+.account-status-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-  }
-  
-  .account-status-card {
-    background: #fff;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 2px solid #e9ecef;
-  }
-  
-  .account-header {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.account-status-card {
+    background: linear-gradient(145deg, #ffffff, #f4f6ff);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.account-status-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(102, 126, 234, 0.25);
+}
+
+.account-header {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-  
-  .account-header h4 {
+    gap: 10px;
+}
+
+.account-header h4 {
     margin: 0;
-    font-size: 1rem;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.status-content p {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Refresh button */
+#refreshAccountStatus {
+    border-radius: 999px;
     font-weight: 600;
-  }
-  
-  .status-loading {
+    transition: all 0.25s ease;
+}
+
+#refreshAccountStatus:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+   
+    border-color: transparent;
+}
+
+/* ===============================
+   STATS GRID
+================================ */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 22px;
+    margin-top: 28px;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, #ffffff, #f3f5ff);
+    border-radius: 18px;
+    padding: 22px;
     text-align: center;
-    padding: 1rem;
-  }
-  
-  .spinner {
-    border: 3px solid #f3f3f3;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-  }
-  
-  .spinner.instagram {
-    border-top: 3px solid #e4405f;
-  }
-  
-  .spinner.linkedin {
-    border-top: 3px solid #0a66c2;
-  }
-  
-  .status-loading p {
-    margin-top: 0.5rem;
-    color: #6c757d;
-    font-size: 0.9rem;
-  }
-  
-  .icon-inline {
-    display: inline;
-    vertical-align: middle;
-  }
-  
-  .stat-value-suffix {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #6c757d;
-  }
-  
-  .content-cell {
-    max-width: 350px;
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.18);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 50px rgba(102, 126, 234, 0.28);
+}
+
+.stat-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1f2937;
+}
+
+.stat-value-suffix {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Instagram token card */
+.token-card.instagram {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+.token-card.instagram .stat-label,
+.token-card.instagram .stat-value,
+.token-card.instagram .stat-value-suffix {
+    color: #fff;
+}
+
+.token-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 10px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .media-available {
-    color: #28a745;
-  }
-  
-  .media-none {
-    color: #6c757d;
-  }
-  
-  .time-cell {
-    white-space: nowrap;
-  }
-  
-  .error-btn {
-    margin-left: 4px;
-    background: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-  }
-  
-  .token-center {
+    margin-top: 10px;
+}
+
+.token-progress {
+    height: 100%;
+    background: #fff;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+/* ===============================
+   POSTS TABLE
+================================ */
+
+.posts-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+}
+
+.posts-table thead th {
+    text-align: left;
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    padding-bottom: 10px;
+}
+
+.posts-table tbody tr {
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.12);
+    border-radius: 14px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.posts-table tbody tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 18px 40px rgba(102, 126, 234, 0.2);
+}
+
+.posts-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #374151;
+}
+
+/* Rounded row edges */
+.posts-table tr td:first-child {
+    border-radius: 14px 0 0 14px;
+}
+.posts-table tr td:last-child {
+    border-radius: 0 14px 14px 0;
+}
+
+/* Platform tag */
+.platform-tag.instagram {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e1306c, #f77737);
+    color: #fff;
+}
+
+/* Status badge */
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+/* Media labels */
+.media-available {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.media-none {
+    color: #9ca3af;
+}
+
+/* ===============================
+   ACTION BUTTONS
+================================ */
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    background: #f3f4ff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #a064f4;
+}
+
+.icon-btn:hover {
+    background: linear-gradient(135deg, #92a4f4, #764ba2);
+    box-shadow: 0 20px 25px 30px #764ba2;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.icon-btn.delete:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* ===============================
+   EMPTY STATE
+================================ */
+
+.empty-state {
     text-align: center;
-  }
-  
-  .empty-message {
-    margin-bottom: 1.5rem;
-  }
+    padding: 50px 20px;
+    color: #6b7280;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+/* ===============================
+   MODAL
+================================ */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 18px;
+    max-width: 600px;
+    margin: 10vh auto;
+    padding: 26px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    animation: fadeUp 0.4s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* ===============================
+   ANIMATIONS
+================================ */
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+    .posts-table thead {
+        display: none;
+    }
+
+    .posts-table,
+    .posts-table tbody,
+    .posts-table tr,
+    .posts-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .posts-table tr {
+        margin-bottom: 16px;
+    }
+
+    .posts-table td {
+        padding: 10px 14px;
+        border-radius: 0;
+    }
+}
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 10%, rgba(102,126,234,0.18), transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(118,75,162,0.16), transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(99,102,241,0.12), transparent 40%);
+    z-index: -1;
+}
+
+/* ===============================
+   PREMIUM GLASS CARDS
+================================ */
+
+.card,
+.stat-card,
+.account-status-card {
+    backdrop-filter: blur(14px);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.92),
+            rgba(245,247,255,0.85)
+        );
+    border: 1px solid rgba(102,126,234,0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+/* soft glow edge */
+.card::after,
+.stat-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+    pointer-events: none;
+}
+
+/* ===============================
+   HERO STAT HIGHLIGHT
+================================ */
+
+.stat-card:first-child {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    transform: scale(1.02);
+}
+
+.stat-card:first-child .stat-label,
+.stat-card:first-child .stat-value,
+.stat-card:first-child .stat-value-suffix {
+    color: #fff;
+}
+
+/* glowing pulse */
+.stat-card:first-child::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: radial-gradient(circle, rgba(255,255,255,0.25), transparent 60%);
+    animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.65; }
+}
+
+/* ===============================
+   STAGGERED LOAD MOTION
+================================ */
+
+.stat-card,
+.account-status-card,
+.posts-table tbody tr {
+    opacity: 0;
+    animation: riseIn 0.7s ease forwards;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.posts-table tbody tr:nth-child(odd) {
+    animation-delay: 0.15s;
+}
+.posts-table tbody tr:nth-child(even) {
+    animation-delay: 0.25s;
+}
+
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ===============================
+   INTERACTIVE DEPTH
+================================ */
+
+.stat-card:hover,
+.account-status-card:hover {
+    transform: translateY(-10px) scale(1.04);
+    box-shadow:
+        0 25px 55px rgba(102,126,234,0.35),
+        0 0 0 1px rgba(102,126,234,0.2);
+}
+
+/* table rows feel alive */
+.posts-table tbody tr:hover {
+    background: linear-gradient(135deg, #ffffff, #f4f6ff);
+}
+
+/* ===============================
+   FOCUS ATTRACTORS
+================================ */
+
+.token-card.instagram {
+    position: relative;
+    overflow: hidden;
+}
+
+.token-card.instagram::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    background:
+        linear-gradient(
+            120deg,
+            transparent 30%,
+            rgba(255,255,255,0.35),
+            transparent 70%
+        );
+    animation: shimmer 5s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-60%); }
+    100% { transform: translateX(60%); }
+}
+
+/* ===============================
+   BUTTON ENERGY
+================================ */
+
+.icon-btn,
+#refreshAccountStatus {
+    position: relative;
+    overflow: hidden;
+}
+
+.icon-btn::after,
+#refreshAccountStatus::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top left,
+        rgba(255,255,255,0.35),
+        transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.icon-btn:hover::after,
+#refreshAccountStatus:hover::after {
+    opacity: 1;
+}
+
+/* ===============================
+   MOBILE STILL FEELS PREMIUM
+================================ */
+
+@media (max-width: 768px) {
+    body::before {
+        opacity: 0.7;
+    }
+
+    .stat-card:first-child {
+        transform: none;
+    }
+}
 </style>
 {% endblock %}
 
@@ -129,7 +560,7 @@
         type="button"
         id="refreshAccountStatus"
         class="btn secondary"
-        style="background: #fff; color: #0a66c2; border: 1.5px solid #e9ecef; padding: 0.45rem 0.75rem;"
+        style="background: #fff; color: #b986fc; border: 1.5px solid #e9ecef; padding: 0.45rem 0.75rem;"
         title="Refresh account status"
       >
         ↻ Refresh
@@ -263,7 +694,7 @@
     <div class="empty-state-icon">📭</div>
     <h3>No posts scheduled yet</h3>
     <p class="empty-message">Create your first draft to get started with collaborative social media posting.</p>
-    <a href="{{ url_for('collab.new_draft') }}" class="btn">Create Your First Draft</a>
+    <a href="{{ url_for('collab.new_draft') }}" class="btn" style="background-color: #753baf;">Create Your First Draft</a>
   </div>
   {% endif %}
 </div>

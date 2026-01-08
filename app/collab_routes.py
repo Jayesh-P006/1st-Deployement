@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify, session
 from datetime import datetime
+from pytz import timezone as tz
 import os
 import json
 from . import db
@@ -193,19 +194,32 @@ def edit_draft(draft_id):
             scheduled_time_str = request.form.get('scheduled_time')
             if scheduled_time_str:
                 try:
-                    scheduled_time = datetime.fromisoformat(scheduled_time_str)
-                    draft.scheduled_time = scheduled_time
+                    # Parse the datetime from user input (naive datetime)
+                    naive_dt = datetime.fromisoformat(scheduled_time_str)
+                    
+                    # Get the app timezone
+                    app_tz_name = current_app.config.get('APP_TIMEZONE', 'Asia/Kolkata')
+                    app_tz = tz(app_tz_name)
+                    
+                    # Localize the naive datetime to app timezone
+                    localized_dt = app_tz.localize(naive_dt)
+                    
+                    # Convert to UTC for storage in database
+                    utc_dt = localized_dt.astimezone(tz('UTC'))
+                    
+                    # Store as naive UTC (remove tzinfo to match existing pattern)
+                    draft.scheduled_time = utc_dt.replace(tzinfo=None)
                     
                     activity = Activity(
                         draft_id=draft.id,
                         user_id=current_user.id,
                         action='set_schedule_time',
-                        description=f'Set scheduled time to {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC'
+                        description=f'Set scheduled time to {naive_dt.strftime("%Y-%m-%d %H:%M")} {app_tz_name}'
                     )
                     db.session.add(activity)
-                    flash(f'Scheduled time set for {scheduled_time.strftime("%Y-%m-%d %H:%M")} UTC', 'success')
-                except ValueError:
-                    flash('Invalid datetime format.', 'error')
+                    flash(f'Scheduled time set for {naive_dt.strftime("%Y-%m-%d %H:%M")} {app_tz_name}', 'success')
+                except ValueError as e:
+                    flash(f'Invalid datetime format: {str(e)}', 'error')
             else:
                 flash('Scheduled time is required.', 'error')
         

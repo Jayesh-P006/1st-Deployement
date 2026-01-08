@@ -341,7 +341,6 @@
 
 </div><!-- Close dm-fullscreen-container -->
 
-{% block scripts %}
 {% if selected_conversation %}
 <script>
 // Real-time message polling - fetch new messages every 3 seconds
@@ -494,7 +493,7 @@ document.getElementById('replyForm').addEventListener('submit', async (e) => {
       document.getElementById('messageInput').value = '';
       
       // Trigger immediate poll to show sent message
-      setTimeout(pollMessages, 500);
+      setTimeout(() => refreshMessages(false), 500);
     }
   } catch (error) {
     console.error('Failed to send reply:', error);
@@ -502,8 +501,8 @@ document.getElementById('replyForm').addEventListener('submit', async (e) => {
     e.target.submit();
   }
 });
-{% endif %}
 </script>
+{% endif %}
 
 </body>
 </html>
