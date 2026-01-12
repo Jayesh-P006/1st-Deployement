@@ -79,7 +79,7 @@ def download_image_to_uploads(image_url: str, upload_folder: str) -> Optional[st
         guessed = os.path.splitext(direct_url.split('?')[0])[1]
         ext = guessed if guessed else '.jpg'
 
-    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_') + 'remote' + ext
+    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_%f_') + 'remote' + ext
     full_path = os.path.join(upload_folder, filename)
 
     try:

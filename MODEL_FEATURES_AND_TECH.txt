@@ -1,0 +1,260 @@
+LLUMA AI / Social Post Scheduler — Model Features & Technology
+Date: 2026-01-08
+
+1) What this system is
+- A Flask web app for collaborative content drafting, scheduling, and publishing to Instagram.
+- Includes a DM inbox + automation suite, and an optional Hybrid RAG “model” used to generate replies (DM + comment automation).
+
+2) High-level workflow (sequential)
+1. User registration + login
+2. Admin approval (activate users + assign org position/vertical)
+3. Draft creation (collaborative drafting workflow)
+4. Team contributions (content + media + optional PR tags)
+5. Schedule time selection (entered in local timezone, stored in UTC)
+6. Submit for review
+7. Approve & schedule (creates a ScheduledPost job)
+8. Scheduler executes at due time (Instagram Graph API publish)
+9. Monitoring + status pages for system health
+10. Automations and DM management (manual + AI-assisted)
+
+3) Core product features (with tech used)
+
+3.1 Authentication + access control
+- Login protection on pages and role/position based permissions.
+- Tech: Flask + sessions, decorators in auth module, SQLAlchemy User model.
+- Key files: app/auth.py, app/models.py
+
+Feature details
+- Register: First registered user becomes Admin and active; later users are created as inactive (pending admin approval).
+- Login: Stores user_id/role/full_name in session; blocks inactive users.
+- Logout: Clears session.
+- Profile: Shows current user profile.
+
+Tech used
+- Password hashing: Werkzeug security helpers.
+
+3.2 Admin: user activation + org structure
+- Admin approves/denies pending users; assigns vertical + position.
+- Tech: Flask blueprints + SQLAlchemy.
+- Key files: app/admin_routes.py, app/templates/admin/*
+
+Feature details
+- Manage Requests: View all pending (inactive) users.
+- Approve User: Activate and assign vertical + position.
+- Deny User: Remove user.
+- Webhook Dashboard: Shows webhook URL/verify token and config status.
+
+3.3 Collaborative Drafts (team workflow)
+- Draft lifecycle: draft → review → approved → scheduled (and then posted by scheduler).
+- Separate completion tracking for: content, media, tags.
+- Activity feed + comments per draft.
+- Tech: SQLAlchemy models (PostDraft, Comment, Activity), Flask routes/templates.
+- AI caption/vision helpers exist for media analysis.
+- Key files: app/collab_routes.py, app/models.py, app/ai/vision_service.py, app/templates/collab/*
+
+Feature details
+- Draft board: View drafts filtered by workflow stage (draft/review/approved).
+- Draft editor: Update content, upload media, add collaboration tags.
+- Schedule time per draft: Local time input → stored UTC.
+- Submit for review: Requires content + media completed and a schedule time.
+- Approval: Creates a ScheduledPost and schedules it for posting.
+- Draft comments: Team discussion and review notes.
+- Activity timeline: Records key actions (created draft, updated content, uploaded media, approved, etc.).
+- Caption generation (API): Generate captions from image(s) for faster copywriting.
+- Auto-save (API): Save partial edits without full form submit.
+- Remove media (API): Remove uploaded images from a draft.
+
+3.4 Scheduling (timezone-correct)
+- Users enter schedule time in local timezone (configured by APP_TIMEZONE).
+- System converts local time → UTC for storage and scheduling.
+- Scheduler checks pending posts every minute and also schedules precise one-off jobs.
+- Tech: APScheduler BackgroundScheduler, UTC storage, conversion utilities.
+- Key files: app/__init__.py, app/routes.py, app/collab_routes.py, config.py
+
+Feature details
+- Two safety layers:
+	- Periodic scan job (every minute) posts anything due.
+	- Individual scheduled jobs for better precision.
+- Token usage tracking per platform for quota awareness.
+
+3.5 Posting to Instagram (publish pipeline)
+- Publishes scheduled posts to Instagram via Meta Graph API.
+- Requires a publicly reachable HTTPS image URL for Instagram (PUBLIC_URL/uploads/<filename>).
+- Supports single-image posts and carousel posts.
+- Tech: requests, Meta Graph API v19.0.
+- Key files: app/social/instagram.py
+
+Feature details
+- Account status check endpoint (used by UI): validates token + business id and returns account profile fields.
+- Strong validation: prevents localhost/non-HTTPS PUBLIC_URL for media publishing.
+
+3.6 Upload serving (for Instagram fetch)
+- Uploaded media is stored in UPLOAD_FOLDER and served via /uploads/<filename>.
+- Tech: Flask file serving (send_from_directory) + filesystem storage.
+- Key files: app/routes.py, app/__init__.py, config.py
+
+Feature details
+- Safe filename handling (basic traversal prevention).
+- Returns clear 404 when file missing (important for Instagram troubleshooting).
+
+Extra media feature
+- Remote image import: Convert share links (Drive/Dropbox/OneDrive) to direct URL and download into uploads.
+- Key files: app/utils.py
+
+3.7 Direct Messages (DM inbox)
+- Inbox-style UI to view conversations and messages.
+- Manual reply sending + conversation status updates.
+- Sync endpoint exists to backfill messages (limited by Meta permissions).
+- Tech: Flask blueprint + SQLAlchemy DM models + polling APIs.
+- Key files: app/dm_routes.py, app/models.py, app/templates/dm/conversations.html
+
+Feature details
+- Conversation list ordered by last activity.
+- Message polling APIs:
+	- /dm/api/messages/<conversation_id>
+	- /dm/api/conversations
+- Mark-as-read behavior (unread_count reset when opened, if the column exists).
+- Manual reply sends message via Graph API and stores outgoing message in DB even on send failure.
+- Conversation status updates: active/resolved/archived.
+
+3.8 Instagram Webhooks for DM automation
+- Webhook signature verification (optional if app secret missing).
+- Stores inbound messages, de-dupes by message_id, and can auto-reply.
+- Tech: Flask request handling, HMAC verification, Meta webhook formats.
+- Key files: app/social/instagram_webhooks.py, app/webhook_routes.py
+
+Feature details
+- /webhook/instagram:
+	- GET for webhook verification handshake.
+	- POST for processing events (signature verified via X-Hub-Signature-256).
+- Defensive message ID normalization to fit DB constraints.
+- Asynchronous processing for slow work (reply generation / sending).
+
+3.9 Automation Suite (3 main areas)
+- Auto-comment reply settings.
+- Comment-to-DM keyword triggers.
+- Logging + analytics pages.
+- Tech: Flask blueprint + SQLAlchemy models + optional RAG generation.
+- Key files: app/automation_routes.py, app/automation_handlers.py, app/models.py, app/templates/automation/*
+
+Feature details
+A) Auto-comment reply
+- Toggle active/inactive, configure tone, delay, keyword ignore list, rate limit per hour.
+- Can use RAG to generate replies; falls back to a preset message.
+- Replies are posted via Graph API (/{comment_id}/replies).
+
+B) Comment-to-DM triggers
+- Create keyword triggers that DM users when a matching comment is detected.
+- Duplicate prevention: one DM per user per post.
+- Optional RAG-generated DM message.
+
+C) Logs + analytics
+- Unified log table for all automation actions (success/failure, error, response time, payload).
+- Stats dashboard (today/week/month) and “top triggers”.
+
+3.10 System Status Monitor
+- A status endpoint that reports health/config readiness for major services.
+- Tech: Flask blueprint returning JSON; light runtime checks.
+- Key files: app/status_api.py, app/templates/workflow_status.html
+
+Feature details
+- /status/api/status/system: Returns service tiles (Graph API, webhooks, DB, Groq, Pinecone, scheduler, automation, Gemini).
+- /status/api/config-check: Returns PUBLIC_URL sanity, HTTPS check, and an example uploads URL if available.
+
+3.11 Public policy pages (compliance basics)
+- Privacy Policy page.
+- Terms page.
+- Data Deletion page.
+- Tech: Flask routes + Jinja templates.
+- Key files: app/routes.py, app/templates/privacy_policy.html, app/templates/terms.html, app/templates/data_deletion.html
+
+3.12 Post management (simple scheduler UI)
+- Dashboard: lists posts and success-rate stats.
+- New post: schedule Instagram post with uploaded images or image URL.
+- Edit post: update scheduled content/time/media.
+- Delete post.
+- Token/quota status endpoint.
+- Account status endpoint (cached) for Instagram connection check.
+- Tech: Flask routes + SQLAlchemy ScheduledPost + TokenUsage.
+- Key files: app/routes.py, app/models.py
+
+4) The “Model” (Hybrid RAG) — what it does
+The RAG system is used to generate responses for DMs/comments (when enabled), aiming to be cost-efficient.
+
+4.1 “Learner” (ingestion)
+- Downloads post images into RAM, extracts key facts via Gemini Vision, embeds text, and stores vectors in Pinecone.
+- Tech: Gemini (Vision + embeddings), Pinecone vector DB, LangChain wrappers, PIL.
+- Key files: app/ai/rag_ingest.py
+
+4.2 “Talker” (chat)
+- Gatekeeper: filters common greetings and replies with static templates (no LLM call).
+- Retrieval: k=1 Pinecone retrieval to keep context small.
+- Generation: Groq-hosted Llama model for final response.
+- Rate limiter to respect free-tier limits.
+- Tech: Groq (ChatGroq), Pinecone, LangChain ConversationalRetrievalChain, memory buffer.
+- Key files: app/ai/rag_chat.py
+
+4.3 RAG Status pages / admin API
+- UI + JSON endpoints to test RAG, view Pinecone stats, clear memory.
+- Tech: Flask routes.
+- Key files: app/rag_routes.py, rag_admin_api.py
+
+4.4 Gatekeeper + token optimization behaviors
+- Gatekeeper handles common greetings without calling the LLM.
+- Retrieval k=1 to minimize context.
+- Short response limits to control cost.
+- Rate limiting to avoid provider throttling.
+
+5) Technology stack summary
+- Backend: Python, Flask
+- Templates/UI: Jinja2 templates + CSS (app/static/css/style.css)
+- Database ORM: SQLAlchemy
+- Scheduler: APScheduler
+- HTTP client: requests
+- Instagram integration: Meta Graph API v19.0 (publishing + messaging endpoints)
+- AI/RAG: Gemini (API key), Groq Llama (API key), Pinecone (API key), LangChain ecosystem
+- Deployment: Designed for Railway (env vars like RAILWAY_PUBLIC_DOMAIN supported)
+
+6) Major data models (what’s stored)
+- User: account identity, role/vertical/position, active flag.
+- PostDraft: collaborative draft + workflow statuses.
+- Comment + Activity: review discussion and audit trail.
+- ScheduledPost: executable scheduled publish item.
+- TokenUsage: per-platform usage counters.
+- DMConversation + DMMessage: DM inbox history.
+- ChatSettings: global DM automation controls.
+- AutoReplySettings / CommentTrigger / AutomationLog / CommentDMTracker: automation suite settings, triggers, and audit logs.
+
+7) Key environment variables (high value)
+Core app
+- SECRET_KEY: Flask secret
+- PUBLIC_URL: Public HTTPS base URL for the running app (required for Instagram media fetch)
+- APP_TIMEZONE: e.g., Asia/Kolkata
+- UPLOAD_FOLDER: local folder for uploads (set internally from config)
+
+Instagram
+- INSTAGRAM_ACCESS_TOKEN
+- INSTAGRAM_BUSINESS_ACCOUNT_ID
+- WEBHOOK_VERIFY_TOKEN
+- INSTAGRAM_APP_SECRET (optional but recommended for signature verification)
+
+RAG / AI
+- GEMINI_API_KEY
+- GROQ_API_KEY
+- PINECONE_API_KEY
+Optional tuning
+- GROQ_MODEL
+- GEMINI_VISION_MODEL
+- GEMINI_EMBEDDING_MODEL
+- PINECONE_INDEX_NAME
+- PINECONE_ENVIRONMENT
+- RAG_RETRIEVAL_K
+- RAG_MAX_CONTEXT_TOKENS
+- RAG_RATE_LIMIT_DELAY
+
+8) Notes / constraints to remember
+- Instagram publishing requires HTTPS and a publicly accessible image URL.
+- DM history sync may be blocked unless Meta grants extended permissions (e.g., read_mailbox).
+- RAG features require GROQ + PINECONE + GEMINI keys configured; otherwise RAG should be treated as disabled.
+
+End of document.

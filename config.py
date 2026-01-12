@@ -76,6 +76,26 @@ class Config:
     # Gemini AI Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
     GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+
+    # RAG / LLM Providers (used by DM + Automation Suite)
+    # Groq (LLM)
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+    GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama3-8b-8192')
+
+    # Gemini models used for RAG ingestion + embeddings
+    GEMINI_VISION_MODEL = os.getenv('GEMINI_VISION_MODEL', 'gemini-1.5-flash')
+    GEMINI_EMBEDDING_MODEL = os.getenv('GEMINI_EMBEDDING_MODEL', 'models/text-embedding-004')
+
+    # Pinecone (vector DB)
+    PINECONE_API_KEY = os.getenv('PINECONE_API_KEY', '')
+    PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME', 'social-vectors')
+    # Pinecone serverless region (used as ServerlessSpec.region)
+    PINECONE_ENVIRONMENT = os.getenv('PINECONE_ENVIRONMENT', 'us-east-1')
+
+    # RAG tuning / safety limits
+    RAG_RETRIEVAL_K = int(os.getenv('RAG_RETRIEVAL_K', '1'))
+    RAG_MAX_CONTEXT_TOKENS = int(os.getenv('RAG_MAX_CONTEXT_TOKENS', '200'))
+    RAG_RATE_LIMIT_DELAY = float(os.getenv('RAG_RATE_LIMIT_DELAY', '2.0'))
     
     # Timezone Configuration (for converting user input to UTC)
     # Set to your local timezone, e.g., 'Asia/Kolkata' for IST

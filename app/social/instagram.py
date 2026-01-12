@@ -1,8 +1,49 @@
 import requests
 import json
+import time
 from flask import current_app
 
 API_BASE = 'https://graph.facebook.com/v19.0'
+
+
+def _get_container_status(container_id: str, token: str) -> dict:
+    """Fetch container status for an Instagram media container."""
+    resp = requests.get(
+        f"{API_BASE}/{container_id}",
+        params={
+            'fields': 'id,status,status_code',
+            'access_token': token,
+        },
+        timeout=15,
+    )
+    if resp.status_code >= 300:
+        error_data = resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {'message': resp.text}
+        error_msg = error_data.get('error', {}).get('message', error_data.get('message', resp.text))
+        raise RuntimeError(f'Instagram container status failed (HTTP {resp.status_code}): {error_msg}')
+    return resp.json() if resp.headers.get('content-type', '').startswith('application/json') else {}
+
+
+def _wait_for_container_ready(container_id: str, token: str, *, timeout_seconds: int = 120, poll_seconds: float = 2.5) -> None:
+    """Wait until Instagram marks a media container FINISHED before publishing.
+
+    Without this, publish can fail intermittently with: "Media ID is not available".
+    """
+    deadline = time.monotonic() + max(5, int(timeout_seconds))
+    last_payload = None
+    while time.monotonic() < deadline:
+        payload = _get_container_status(container_id, token)
+        last_payload = payload
+        status_code = (payload.get('status_code') or payload.get('status') or '').upper()
+        if status_code == 'FINISHED':
+            return
+        if status_code == 'ERROR':
+            raise RuntimeError(f'Instagram media container errored before publish. Container: {container_id}. Status payload: {payload}')
+        time.sleep(max(0.5, float(poll_seconds)))
+
+    raise RuntimeError(
+        'Instagram media container did not become ready in time. '
+        f'Container: {container_id}. Last status payload: {last_payload}'
+    )
 
 def check_instagram_account_status():
     """Check if Instagram credentials are valid and return account info"""
@@ -138,6 +179,9 @@ def post_to_instagram(post):
         creation_id = resp.json().get('id')
         if not creation_id:
             raise RuntimeError('No creation id returned from Instagram API. Response: ' + str(resp.json()))
+
+        # Wait until the container is ready before publishing
+        _wait_for_container_ready(creation_id, token)
     else:
         # Carousel post with multiple images
         media_ids = []
@@ -176,8 +220,15 @@ def post_to_instagram(post):
                     f'Ensure the URL is publicly accessible and uses HTTPS.'
                 )
             media_id = resp.json().get('id')
-            if media_id:
-                media_ids.append(media_id)
+            if not media_id:
+                raise RuntimeError('No creation id returned for carousel item. Response: ' + str(resp.json()))
+
+            # Wait for each carousel item container to finish processing
+            _wait_for_container_ready(media_id, token)
+            media_ids.append(media_id)
+
+        if not media_ids:
+            raise RuntimeError('No valid carousel media containers were created; cannot publish carousel.')
         
         # Create carousel container
         carousel_endpoint = f"{API_BASE}/{business_id}/media"
@@ -195,6 +246,9 @@ def post_to_instagram(post):
         creation_id = carousel_resp.json().get('id')
         if not creation_id:
             raise RuntimeError('No creation id returned from Instagram carousel. Response: ' + str(carousel_resp.json()))
+
+        # Wait until the carousel container is ready before publishing
+        _wait_for_container_ready(creation_id, token)
     
     # Publish media
     publish_endpoint = f"{API_BASE}/{business_id}/media_publish"

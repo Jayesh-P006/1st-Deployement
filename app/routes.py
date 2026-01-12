@@ -137,7 +137,7 @@ def new_post():
             os.makedirs(upload_folder, exist_ok=True)
             for img in images:
                 if img and img.filename:
-                    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_') + img.filename.replace(' ', '_')
+                    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_%f_') + img.filename.replace(' ', '_')
                     full_path = os.path.join(upload_folder, filename)
                     img.save(full_path)
                     image_paths.append(full_path)
@@ -214,7 +214,7 @@ def edit_post(post_id):
             os.makedirs(upload_folder, exist_ok=True)
             for img in images:
                 if img and img.filename:
-                    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_') + img.filename.replace(' ', '_')
+                    filename = datetime.utcnow().strftime('%Y%m%d%H%M%S_%f_') + img.filename.replace(' ', '_')
                     full_path = os.path.join(upload_folder, filename)
                     img.save(full_path)
                     image_paths.append(full_path)
